@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 1: Product Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #productPreview {
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        #productPreview img {
+            max-width: 300px;
+            margin-bottom: 10px;
+        }
+        .verification-buttons {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step 1: Enter Product URL</h1>
+        <form id="urlForm">
+            <div class="form-group">
+                <label for="productUrl">Product URL (Amazon or Shopify):</label>
+                <input type="url" id="productUrl" required placeholder="https://amazon.com/product-url">
+            </div>
+            <button type="submit">Check Product</button>
+        </form>
+
+        <div id="productPreview">
+            <img id="productImage" src="" alt="Product Preview">
+            <h3 id="productTitle"></h3>
+            <p id="productPrice"></p>
+            <div class="verification-buttons">
+                <button onclick="confirmProduct(true)">Yes, this is my product</button>
+                <button onclick="confirmProduct(false)">No, try again</button>
+            </div>
+        </div>
+
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        let currentProductData = null;
+
+        async function checkProduct(event) {
+            event.preventDefault();
+            const url = document.getElementById('productUrl').value;
+            
+            try {
+                const response = await fetch('http://localhost:3000/check-product', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ productUrl: url })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const productInfo = result.data;
+                    document.getElementById('productImage').src = productInfo.image;
+                    document.getElementById('productTitle').textContent = productInfo.title;
+                    document.getElementById('productPrice').textContent = `$${productInfo.price}`;
+                    document.getElementById('productPreview').style.display = 'block';
+                    
+                    // Store product info in localStorage
+                    localStorage.setItem('productData', JSON.stringify(productInfo));
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        }
+
+        function confirmProduct(isConfirmed) {
+            if (isConfirmed && currentProductData) {
+                // Store the product data in localStorage
+                localStorage.setItem('productData', JSON.stringify(currentProductData));
+                // Redirect to the next page
+                window.location.href = '/shipping.html';
+            } else {
+                // Reset the form
+                document.getElementById('urlForm').reset();
+                document.getElementById('productPreview').style.display = 'none';
+                document.querySelector('.verification-buttons').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html> 

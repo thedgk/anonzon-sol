@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 3: Payment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .order-summary {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .price-breakdown {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .total {
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step 3: Payment</h1>
+        
+        <div class="order-summary">
+            <h3>Order Summary</h3>
+            <div id="orderSummary"></div>
+        </div>
+
+        <div class="price-breakdown">
+            <h3>Price Breakdown</h3>
+            <div id="priceBreakdown"></div>
+        </div>
+
+        <button onclick="createOrder()">Pay with Helio</button>
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        // Load data from localStorage
+        const productData = JSON.parse(localStorage.getItem('productData'));
+        const shippingData = JSON.parse(localStorage.getItem('shippingData'));
+
+        if (!productData || !shippingData) {
+            window.location.href = '/';
+        }
+
+        // Calculate fees
+        const basePrice = productData.price;
+        const shippingFee = basePrice < 100 ? basePrice * 0.10 : 10; // 10% if under $100, else $10
+        const merchantFee = basePrice * 0.02; // 2% merchant fee
+        const siteFee = basePrice * 0.02; // 2% site fee
+        const totalPrice = basePrice + shippingFee + merchantFee + siteFee;
+
+        // Display order summary
+        document.getElementById('orderSummary').innerHTML = `
+            <p><strong>Product:</strong> ${productData.title}</p>
+            <p><strong>Shipping to:</strong> ${shippingData.name}</p>
+            <p>${shippingData.address.street}<br>
+               ${shippingData.address.city}, ${shippingData.address.state} ${shippingData.address.zip}<br>
+               ${shippingData.address.country}</p>
+            <img src="${productData.image}" alt="Product" style="max-width: 200px;">
+        `;
+
+        // Display price breakdown
+        document.getElementById('priceBreakdown').innerHTML = `
+            <div class="price-item">
+                <span>Base Price:</span>
+                <span>${basePrice.toFixed(2)} ${productData.currency}</span>
+            </div>
+            <div class="price-item">
+                <span>Shipping Fee:</span>
+                <span>${shippingFee.toFixed(2)} ${productData.currency}</span>
+            </div>
+            <div class="price-item">
+                <span>Merchant Fee (2%):</span>
+                <span>${merchantFee.toFixed(2)} ${productData.currency}</span>
+            </div>
+            <div class="price-item">
+                <span>Site Fee (2%):</span>
+                <span>${siteFee.toFixed(2)} ${productData.currency}</span>
+            </div>
+            <div class="price-item total">
+                <span>Total:</span>
+                <span>${totalPrice.toFixed(2)} ${productData.currency}</span>
+            </div>
+        `;
+
+        async function createOrder() {
+            try {
+                const productData = JSON.parse(localStorage.getItem('productData'));
+                const shippingData = JSON.parse(localStorage.getItem('shippingData'));
+                
+                if (!productData || !shippingData) {
+                    throw new Error('Missing product or shipping data');
+                }
+
+                const pricing = {
+                    basePrice: productData.price,
+                    shippingFee: calculateShippingFee(productData.price),
+                    merchantFee: productData.price * 0.05,
+                    siteFee: productData.price * 0.03,
+                    totalPrice: calculateTotalPrice(productData.price)
+                };
+
+                const response = await fetch('http://localhost:3000/order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        productData,
+                        shippingData,
+                        pricing
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = result.data.paymentLink;
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        }
+    </script>
+</body>
+</html> 

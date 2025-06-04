@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 2: Shipping Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .product-summary {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step 2: Shipping Information</h1>
+        
+        <div class="product-summary">
+            <h3>Product Summary</h3>
+            <div id="productSummary"></div>
+        </div>
+
+        <form id="shippingForm">
+            <div class="form-group">
+                <label for="name">Full Name (Required):</label>
+                <input type="text" id="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email (Optional):</label>
+                <input type="email" id="email">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number (Optional):</label>
+                <input type="tel" id="phone">
+            </div>
+
+            <h3>Shipping Address</h3>
+            <div class="form-group">
+                <label for="street">Street Address (Required):</label>
+                <input type="text" id="street" required>
+            </div>
+
+            <div class="form-group">
+                <label for="city">City (Required):</label>
+                <input type="text" id="city" required>
+            </div>
+
+            <div class="form-group">
+                <label for="state">State/Province (Required):</label>
+                <input type="text" id="state" required>
+            </div>
+
+            <div class="form-group">
+                <label for="zip">ZIP/Postal Code (Required):</label>
+                <input type="text" id="zip" required>
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country (Required):</label>
+                <input type="text" id="country" required>
+            </div>
+
+            <button type="submit">Continue to Payment</button>
+        </form>
+
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        // Load product data from localStorage
+        const productData = JSON.parse(localStorage.getItem('productData'));
+        if (!productData) {
+            window.location.href = '/';
+        }
+
+        // Display product summary
+        document.getElementById('productSummary').innerHTML = `
+            <p><strong>Product:</strong> ${productData.title}</p>
+            <p><strong>Price:</strong> ${productData.price} ${productData.currency}</p>
+            <img src="${productData.image}" alt="Product" style="max-width: 200px;">
+        `;
+
+        document.getElementById('shippingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const shippingData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: {
+                    street: document.getElementById('street').value,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value,
+                    zip: document.getElementById('zip').value,
+                    country: document.getElementById('country').value
+                }
+            };
+
+            // Store shipping data in localStorage
+            localStorage.setItem('shippingData', JSON.stringify(shippingData));
+            
+            // Redirect to payment page
+            window.location.href = '/payment.html';
+        });
+    </script>
+</body>
+</html> 
