@@ -3,6 +3,8 @@ import { Container, Box, Stepper, Step, StepLabel, Paper } from '@mui/material';
 import ProductVerification from './components/ProductVerification';
 import ShippingInfo from './components/ShippingInfo';
 import Payment from './components/Payment';
+import OrderConfirmed from './components/OrderConfirmed';
+import { Routes, Route } from 'react-router-dom';
 
 const steps = ['Product Verification', 'Shipping Information', 'Payment'];
 
@@ -68,20 +70,25 @@ function App() {
   };
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
-        <Paper sx={{ p: 3 }}>
-          <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-          {renderStepContent(activeStep)}
-        </Paper>
-      </Box>
-    </Container>
+    <Routes>
+      <Route path="/" element={
+        <Container maxWidth="md">
+          <Box sx={{ my: 4 }}>
+            <Paper sx={{ p: 3 }}>
+              <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+                {steps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+              {renderStepContent(activeStep)}
+            </Paper>
+          </Box>
+        </Container>
+      } />
+      <Route path="/order-confirmed" element={<OrderConfirmed />} />
+    </Routes>
   );
 }
 

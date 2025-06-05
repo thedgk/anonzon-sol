@@ -8,9 +8,11 @@ import {
   CardContent,
   CardMedia,
   Alert,
-  Divider
+  Divider,
+  Modal
 } from '@mui/material';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -18,6 +20,13 @@ function Payment({ onBack, orderData }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [solPrice, setSolPrice] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [invoice, setInvoice] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('pending');
+  const [txnInput, setTxnInput] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyResult, setVerifyResult] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch SOL/USD price from Binance
@@ -34,6 +43,16 @@ function Payment({ onBack, orderData }) {
     fetchSolPrice();
   }, []);
 
+  useEffect(() => {
+    if (paymentStatus === 'paid') {
+      setVerifyResult((prev) => ({ ...prev, message: 'Redirecting...' }));
+      const timer = setTimeout(() => {
+        navigate('/order-confirmed');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStatus, navigate]);
+
   const calculateFees = (basePrice) => {
     const shippingFee = basePrice < 100 ? basePrice * 0.10 : 10;
     const merchantFee = basePrice * 0.02;
@@ -48,34 +67,47 @@ function Payment({ onBack, orderData }) {
     };
   };
 
-  const handlePayment = async () => {
+  // Calculate total and per-product fees
+  const productFees = orderData.products.map((product) => calculateFees(product.price));
+  const totalBase = orderData.products.reduce((sum, p) => sum + p.price, 0);
+  const totalFees = calculateFees(totalBase);
+  const solAmount = solPrice ? (totalFees.totalPrice / solPrice).toFixed(4) : null;
+
+  const handlePayNow = async () => {
     setLoading(true);
     setError('');
     try {
-      // Calculate total pricing for all products
-      const totalBase = orderData.products.reduce((sum, p) => sum + p.price, 0);
-      const totalFees = calculateFees(totalBase);
-      const response = await axios.post(`${API_BASE_URL}/order`, {
-        productData: orderData.products,
-        shippingData: orderData.shippingData,
-        pricing: totalFees
+      const response = await axios.post(`${API_BASE_URL}/payments/create-invoice`, {
+        email: orderData.shippingData.email || 'noemail@anon.com',
+        amount: solAmount
       });
-      if (response.data.success) {
-        window.location.href = response.data.data.paymentLink;
-      } else {
-        setError(response.data.message);
-      }
+      setInvoice(response.data);
+      setModalOpen(true);
+      setPaymentStatus('pending');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create payment');
+      setError(err.response?.data?.error || 'Failed to create payment invoice');
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate total and per-product fees
-  const productFees = orderData.products.map((product) => calculateFees(product.price));
-  const totalBase = orderData.products.reduce((sum, p) => sum + p.price, 0);
-  const totalFees = calculateFees(totalBase);
+  const handleVerifyTxn = async () => {
+    setVerifyLoading(true);
+    setVerifyResult(null);
+    setError('');
+    try {
+      const res = await axios.post(`${API_BASE_URL}/payments/verify-txn`, {
+        sessionId: invoice.sessionId,
+        txnInput: txnInput.trim(),
+      });
+      setVerifyResult({ success: true, message: res.data.message, amountReceived: res.data.amountReceived });
+      setPaymentStatus('paid');
+    } catch (err) {
+      setVerifyResult({ success: false, message: err.response?.data?.message || err.response?.data?.error || 'Verification failed' });
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
 
   return (
     <Box>
@@ -203,11 +235,11 @@ function Payment({ onBack, orderData }) {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={handlePayment}
-                  disabled={loading}
+                  onClick={handlePayNow}
+                  disabled={loading || !solAmount}
                   fullWidth
                 >
-                  {loading ? 'Processing...' : 'Pay with Helio'}
+                  {loading ? 'Processing...' : 'Pay Now'}
                 </Button>
               </Box>
               {error && (
@@ -219,6 +251,48 @@ function Payment({ onBack, orderData }) {
           </Card>
         </Grid>
       </Grid>
+      {/* Payment Modal */}
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2, minWidth: 350, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom>Send Payment</Typography>
+          {invoice && (
+            <>
+              <Typography variant="body1" sx={{ mb: 1 }}>Send exactly <b>{solAmount} SOL</b> to:</Typography>
+              <Typography variant="body2" sx={{ mb: 2, wordBreak: 'break-all' }}>{invoice.publicKey}</Typography>
+              <img src={invoice.qrCodeUrl} alt="QR Code" style={{ width: 180, marginBottom: 16 }} />
+              <Typography variant="body2" sx={{ mb: 2 }}>Scan QR or copy address to pay from your wallet.</Typography>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>After sending payment, paste your transaction ID or Solscan link below:</Typography>
+              <input
+                type="text"
+                value={txnInput}
+                onChange={e => setTxnInput(e.target.value)}
+                placeholder="Transaction ID or Solscan link"
+                style={{ width: '100%', padding: 8, marginBottom: 12, borderRadius: 4, border: '1px solid #ccc' }}
+                disabled={verifyLoading || paymentStatus === 'paid'}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleVerifyTxn}
+                disabled={verifyLoading || !txnInput || paymentStatus === 'paid'}
+                sx={{ mb: 2 }}
+              >
+                {verifyLoading ? 'Verifying...' : 'Submit Transaction'}
+              </Button>
+              {verifyResult && (
+                <Alert severity={verifyResult.success ? 'success' : 'error'} sx={{ mb: 2 }}>
+                  {verifyResult.message}
+                  {verifyResult.success && verifyResult.amountReceived && (
+                    <><br />Amount received: {verifyResult.amountReceived} SOL</>
+                  )}
+                </Alert>
+              )}
+              <Button variant="outlined" onClick={() => setModalOpen(false)} sx={{ mt: 1 }}>Close</Button>
+            </>
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 }
