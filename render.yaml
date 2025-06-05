@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: anonzon-sol-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        value:mongodb+srv://catalystlabs0:komrRaHFKQGlfoNt@anonzon.dabzdrk.mongodb.net/?retryWrites=true&w=majority&appName=anonzon
+      - key: HELIUS_RPC_KEY
+        value:c12aa389-c902-4440-84dc-5b7000307b07
+      - key: PORT
+        value: 4000 
