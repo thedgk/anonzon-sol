@@ -5,6 +5,7 @@ const helioService = require('../services/helioService');
 const emailService = require('../services/emailService');
 const geoip = require('geoip-lite');
 const TrackedUrl = require('../models/TrackedUrl');
+const axios = require('axios');
 
 // Check product endpoint
 router.post('/check-product', async (req, res) => {
@@ -21,16 +22,26 @@ router.post('/check-product', async (req, res) => {
     // Scrape product information
     const productInfo = await scrapeService.scrapeProduct(productUrl);
 
+    // Get SOL/USD price from Binance
+    let priceSOL = null;
+    if (productInfo && productInfo.price) {
+      const solRes = await axios.get('https://api.binance.com/api/v3/ticker/price', {
+        params: { symbol: 'SOLUSDT' }
+      });
+      const solPrice = parseFloat(solRes.data.price);
+      priceSOL = (productInfo.price / solPrice).toFixed(4);
+    }
+
     // Save the checked URL and product info to MongoDB
     await TrackedUrl.findOneAndUpdate(
       { url: productUrl },
-      { url: productUrl, checkedAt: new Date(), productInfo },
+      { url: productUrl, checkedAt: new Date(), productInfo, priceUSD: productInfo.price, priceSOL },
       { upsert: true, new: true }
     );
     
     res.json({
       success: true,
-      data: productInfo
+      data: { ...productInfo, priceSOL }
     });
   } catch (error) {
     console.error('Product check error:', error);
