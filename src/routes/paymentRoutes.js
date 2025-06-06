@@ -15,6 +15,13 @@ router.post('/create-invoice', async (req, res) => {
   const { email, amount, products } = req.body;
   if (!email || !amount) return res.status(400).json({ error: 'Missing email or amount' });
 
+  // Extract productUrl if available
+  let productUrl = undefined;
+  if (products && Array.isArray(products) && products.length > 0) {
+    if (products[0].url) productUrl = products[0].url;
+    else if (products[0].productUrl) productUrl = products[0].productUrl;
+  }
+
   // Generate Solana wallet
   const keypair = Keypair.generate();
   const publicKey = keypair.publicKey.toBase58();
@@ -29,12 +36,15 @@ router.post('/create-invoice', async (req, res) => {
   if (products) {
     console.log('Products:', JSON.stringify(products, null, 2));
   }
+  if (productUrl) {
+    console.log('Product URL:', productUrl);
+  }
   console.log('---------------------');
 
   // Save session (store unencrypted private key for now)
   const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
   const session = await PaymentSession.create({
-    email, amount, publicKey, encryptedPrivateKey: privateKey, expiresAt
+    email, amount, publicKey, encryptedPrivateKey: privateKey, expiresAt, productUrl
   });
 
   // Generate QR code (solana:<address>?amount=<amount>)

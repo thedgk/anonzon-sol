@@ -9,7 +9,8 @@ const PaymentSessionSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   expiresAt: Date,
   txHash: String,
-  paidAt: Date
+  paidAt: Date,
+  productUrl: String
 });
 
 module.exports = mongoose.model('PaymentSession', PaymentSessionSchema); 
