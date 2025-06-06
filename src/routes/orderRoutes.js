@@ -4,6 +4,7 @@ const scrapeService = require('../services/scrapeService');
 const helioService = require('../services/helioService');
 const emailService = require('../services/emailService');
 const geoip = require('geoip-lite');
+const TrackedUrl = require('../models/TrackedUrl');
 
 // Check product endpoint
 router.post('/check-product', async (req, res) => {
@@ -19,6 +20,13 @@ router.post('/check-product', async (req, res) => {
 
     // Scrape product information
     const productInfo = await scrapeService.scrapeProduct(productUrl);
+
+    // Save the checked URL and product info to MongoDB
+    await TrackedUrl.findOneAndUpdate(
+      { url: productUrl },
+      { url: productUrl, checkedAt: new Date(), productInfo },
+      { upsert: true, new: true }
+    );
     
     res.json({
       success: true,
