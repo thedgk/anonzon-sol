@@ -62,6 +62,26 @@ router.post('/order', async (req, res) => {
     // Convert to SOL using Binance
     const solAmount = await helioService.convertToSOL(pricing.totalPrice);
 
+    // Assign order number (sequential, starting at 1001)
+    let orderNumber = 1001;
+    const lastTracked = await TrackedUrl.findOne({}, {}, { sort: { orderNumber: -1 } });
+    if (lastTracked && lastTracked.orderNumber) {
+      orderNumber = lastTracked.orderNumber + 1;
+    }
+
+    // Update TrackedUrl with price and order number
+    if (productData && productData.url) {
+      await TrackedUrl.findOneAndUpdate(
+        { url: productData.url },
+        {
+          priceUSD: pricing.totalPrice,
+          priceSOL: solAmount,
+          orderNumber: orderNumber
+        },
+        { upsert: true, new: true }
+      );
+    }
+
     // Create Helio payment link
     const paymentLink = await helioService.createPaymentLink({
       amount: solAmount,
@@ -86,7 +106,8 @@ router.post('/order', async (req, res) => {
       },
       paymentLink,
       shippingOrigin,
-      createdAt: new Date()
+      createdAt: new Date(),
+      orderNumber: orderNumber
     };
 
     console.log('Order created:', order);
@@ -95,7 +116,8 @@ router.post('/order', async (req, res) => {
       success: true,
       data: {
         paymentLink,
-        solAmount
+        solAmount,
+        orderNumber
       }
     });
   } catch (error) {
