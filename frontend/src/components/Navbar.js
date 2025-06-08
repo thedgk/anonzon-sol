@@ -1,41 +1,90 @@
-import React from 'react';
-import { AppBar, Toolbar, Box, Button, Stack } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { AppBar, Toolbar, Box, Button, Stack, useTheme, useMediaQuery } from '@mui/material';
 import { useLocation, Link as RouterLink } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 20;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [scrolled]);
+
   return (
     <AppBar 
       position="fixed" 
       elevation={0} 
-      className="privacy-nav"
+      component={motion.div}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
       sx={{
-        backgroundColor: '#fff',
-        borderBottom: '1px solid #ececec',
+        background: scrolled 
+          ? 'rgba(0, 0, 0, 0.8)'
+          : 'transparent',
+        backdropFilter: 'blur(10px)',
+        borderBottom: scrolled 
+          ? '1px solid rgba(255, 255, 255, 0.1)'
+          : 'none',
         boxShadow: 'none',
+        transition: 'all 0.3s ease-in-out',
       }}
     >
       <Toolbar 
-        className="privacy-nav-content"
         sx={{ 
           justifyContent: 'space-between',
-          minHeight: '64px',
-          padding: '0 2rem',
+          minHeight: { xs: '64px', md: '80px' },
+          px: { xs: 2, md: 4 },
+          maxWidth: '1400px',
+          mx: 'auto',
+          width: '100%',
         }}
       >
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          fontWeight: 900, 
-          fontSize: 28, 
-          letterSpacing: 1,
-          color: '#222',
-          fontFamily: 'Inter, sans-serif',
-        }}>
-          ANONZON
+        <Box 
+          component={RouterLink}
+          to="/"
+          sx={{ 
+            textDecoration: 'none',
+            cursor: 'pointer',
+            '&:hover': {
+              opacity: 0.9
+            }
+          }}
+        >
+          <Box 
+            component={motion.div}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              fontWeight: 800, 
+              fontSize: { xs: 24, md: 28 }, 
+              letterSpacing: 1,
+              background: 'linear-gradient(45deg, #fff 30%, #a8a8a8 90%)',
+              backgroundClip: 'text',
+              textFillColor: 'transparent',
+              fontFamily: 'Inter, sans-serif',
+            }}
+          >
+            ANONZON
+          </Box>
         </Box>
+
         <Stack 
           direction="row" 
-          spacing={4}
+          spacing={{ xs: 2, md: 4 }}
           sx={{
             marginLeft: 'auto',
             alignItems: 'center',
@@ -46,15 +95,15 @@ const Navbar = () => {
             to="/revshare"
             variant="text"
             sx={{
-              color: '#222',
+              color: 'rgba(255, 255, 255, 0.9)',
               fontWeight: 500,
-              fontSize: 18,
+              fontSize: { xs: 16, md: 18 },
               textTransform: 'none',
               px: 1,
               minWidth: 0,
               '&:hover': {
-                background: 'rgba(0,0,0,0.04)',
-                color: '#111',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#fff',
               }
             }}
           >
@@ -65,15 +114,15 @@ const Navbar = () => {
             to="/socials"
             variant="text"
             sx={{
-              color: '#222',
+              color: 'rgba(255, 255, 255, 0.9)',
               fontWeight: 500,
-              fontSize: 18,
+              fontSize: { xs: 16, md: 18 },
               textTransform: 'none',
               px: 1,
               minWidth: 0,
               '&:hover': {
-                background: 'rgba(0,0,0,0.04)',
-                color: '#111',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#fff',
               }
             }}
           >
@@ -84,41 +133,44 @@ const Navbar = () => {
             to="/howitworks"
             variant="text"
             sx={{
-              color: '#222',
+              color: 'rgba(255, 255, 255, 0.9)',
               fontWeight: 500,
-              fontSize: 18,
+              fontSize: { xs: 16, md: 18 },
               textTransform: 'none',
               px: 1,
               minWidth: 0,
               '&:hover': {
-                background: 'rgba(0,0,0,0.04)',
-                color: '#111',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#fff',
               }
             }}
           >
             How it Works
           </Button>
           <Button
+            component={RouterLink}
+            to="/app"
             variant="contained"
             sx={{
-              fontSize: 18,
+              fontSize: { xs: 16, md: 18 },
               fontWeight: 700,
-              px: 4,
+              px: { xs: 3, md: 4 },
               py: 1.2,
-              ml: 2,
-              background: '#222',
+              ml: { xs: 1, md: 2 },
+              background: 'rgba(255, 255, 255, 0.1)',
               color: '#fff',
-              borderRadius: 999,
+              borderRadius: '8px',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               boxShadow: 'none',
               textTransform: 'none',
               letterSpacing: 0.5,
               minWidth: 0,
               '&:hover': {
-                background: '#111',
-                color: '#fff',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
               }
             }}
-            href="/app"
           >
             Open App
           </Button>
