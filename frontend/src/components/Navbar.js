@@ -1,16 +1,17 @@
 import React from 'react';
 import { AppBar, Toolbar, Box, Button, Stack } from '@mui/material';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link as RouterLink } from 'react-router-dom';
 
 const Navbar = () => {
   return (
     <AppBar 
       position="fixed" 
-      elevation={1} 
+      elevation={0} 
       className="privacy-nav"
       sx={{
-        backgroundColor: 'var(--primary-bg)',
-        borderBottom: '1px solid var(--border-color)'
+        backgroundColor: '#fff',
+        borderBottom: '1px solid #ececec',
+        boxShadow: 'none',
       }}
     >
       <Toolbar 
@@ -18,7 +19,7 @@ const Navbar = () => {
         sx={{ 
           justifyContent: 'space-between',
           minHeight: '64px',
-          padding: '0 2rem'
+          padding: '0 2rem',
         }}
       >
         <Box sx={{ 
@@ -27,49 +28,99 @@ const Navbar = () => {
           fontWeight: 900, 
           fontSize: 28, 
           letterSpacing: 1,
-          background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-color) 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
+          color: '#222',
+          fontFamily: 'Inter, sans-serif',
         }}>
           ANONZON
         </Box>
         <Stack 
           direction="row" 
-          spacing={2}
+          spacing={4}
           sx={{
-            marginLeft: 'auto' // This ensures buttons are pushed to the right
+            marginLeft: 'auto',
+            alignItems: 'center',
           }}
         >
           <Button
-            variant="outlined"
-            className="privacy-button"
+            component={RouterLink}
+            to="/revshare"
+            variant="text"
             sx={{
-              borderColor: 'var(--border-color)',
-              color: 'var(--text-primary)',
+              color: '#222',
+              fontWeight: 500,
+              fontSize: 18,
+              textTransform: 'none',
+              px: 1,
+              minWidth: 0,
               '&:hover': {
-                borderColor: 'var(--accent-color)',
-                backgroundColor: 'rgba(74, 158, 255, 0.08)',
-                color: 'var(--accent-color)'
+                background: 'rgba(0,0,0,0.04)',
+                color: '#111',
               }
             }}
-            href="#token-purchase"
           >
-            Token Purchase
+            Rev Share
+          </Button>
+          <Button
+            component={RouterLink}
+            to="/socials"
+            variant="text"
+            sx={{
+              color: '#222',
+              fontWeight: 500,
+              fontSize: 18,
+              textTransform: 'none',
+              px: 1,
+              minWidth: 0,
+              '&:hover': {
+                background: 'rgba(0,0,0,0.04)',
+                color: '#111',
+              }
+            }}
+          >
+            Socials
+          </Button>
+          <Button
+            component={RouterLink}
+            to="/howitworks"
+            variant="text"
+            sx={{
+              color: '#222',
+              fontWeight: 500,
+              fontSize: 18,
+              textTransform: 'none',
+              px: 1,
+              minWidth: 0,
+              '&:hover': {
+                background: 'rgba(0,0,0,0.04)',
+                color: '#111',
+              }
+            }}
+          >
+            How it Works
           </Button>
           <Button
             variant="contained"
-            className="privacy-button"
             sx={{
-              background: 'var(--privacy-gradient)',
-              color: 'var(--text-primary)',
+              fontSize: 18,
+              fontWeight: 700,
+              px: 4,
+              py: 1.2,
+              ml: 2,
+              background: '#222',
+              color: '#fff',
+              borderRadius: 999,
+              boxShadow: 'none',
+              textTransform: 'none',
+              letterSpacing: 0.5,
+              minWidth: 0,
               '&:hover': {
-                background: 'var(--accent-color)',
-                color: 'var(--text-primary)'
+                background: '#111',
+                color: '#fff',
               }
             }}
-            href="#how-it-works"
+            href="/app"
           >
-            How it Works
+            Open App
           </Button>
         </Stack>
       </Toolbar>

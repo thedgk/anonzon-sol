@@ -80,7 +80,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
 
   return (
     <Box className="privacy-container">
-      <Typography variant="h5" className="privacy-title" gutterBottom>
+      <Typography variant="h5" className="privacy-title" gutterBottom sx={{ color: 'var(--text-primary)' }}>
         Shipping Information
       </Typography>
       <Grid container spacing={3}>
@@ -94,7 +94,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               onChange={handleChange}
               required
               className="privacy-input"
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
             <TextField
               fullWidth
@@ -103,7 +103,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               value={shippingData.email}
               onChange={handleChange}
               className="privacy-input"
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
             <TextField
               fullWidth
@@ -112,9 +112,9 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               value={shippingData.phone}
               onChange={handleChange}
               className="privacy-input"
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
-            <Typography variant="h6" className="privacy-subtitle" sx={{ mt: 2 }}>
+            <Typography variant="h6" className="privacy-subtitle" sx={{ mt: 2, color: 'var(--text-primary)' }}>
               Shipping Address
             </Typography>
             <TextField
@@ -125,7 +125,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               onChange={handleChange}
               required
               className="privacy-input"
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
             <TextField
               fullWidth
@@ -135,7 +135,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               onChange={handleChange}
               required
               className="privacy-input"
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
             <TextField
               fullWidth
@@ -145,7 +145,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               onChange={handleChange}
               required
               className="privacy-input"
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
             <TextField
               fullWidth
@@ -155,7 +155,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               onChange={handleChange}
               required
               className="privacy-input"
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
             <TextField
               fullWidth
@@ -165,7 +165,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               onChange={handleChange}
               required
               className="privacy-input"
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
             {error && (
               <Alert 

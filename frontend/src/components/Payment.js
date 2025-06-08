@@ -111,7 +111,7 @@ function Payment({ onBack, orderData }) {
 
   return (
     <Box className="privacy-container">
-      <Typography variant="h5" className="privacy-title" gutterBottom>
+      <Typography variant="h5" className="privacy-title" gutterBottom sx={{ color: 'var(--text-primary)' }}>
         Payment
       </Typography>
       <Grid container spacing={3}>
@@ -130,7 +130,7 @@ function Payment({ onBack, orderData }) {
                     alt={product.title}
                     sx={{ objectFit: 'contain', mb: 1, borderRadius: '8px' }}
                   />
-                  <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)' }}>{product.title}</Typography>
+                  <Typography variant="subtitle1" sx={{ color: '#111' }}>{product.title}</Typography>
                   <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>USD: ${product.price.toFixed(2)} {solPrice && (
                     <>
                       &nbsp;|&nbsp; SOL: {(product.price / solPrice).toFixed(4)}
@@ -141,7 +141,7 @@ function Payment({ onBack, orderData }) {
               <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ mt: 2 }}>
                 Shipping Information
               </Typography>
-              <Typography sx={{ color: 'var(--text-secondary)' }}>
+              <Typography sx={{ color: '#111' }}>
                 {orderData.shippingData.name}<br />
                 {orderData.shippingData.address.street}<br />
                 {orderData.shippingData.address.city}, {orderData.shippingData.address.state} {orderData.shippingData.address.zip}<br />
@@ -162,7 +162,7 @@ function Payment({ onBack, orderData }) {
                     <Typography sx={{ color: 'var(--text-secondary)' }}>Base Price:</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography sx={{ color: 'var(--text-primary)' }}>
+                    <Typography sx={{ color: '#111' }}>
                       ${totalFees.basePrice.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.basePrice / solPrice).toFixed(4)} SOL</>
@@ -175,7 +175,7 @@ function Payment({ onBack, orderData }) {
                     <Typography sx={{ color: 'var(--text-secondary)' }}>Shipping Fee:</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography sx={{ color: 'var(--text-primary)' }}>
+                    <Typography sx={{ color: '#111' }}>
                       ${totalFees.shippingFee.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.shippingFee / solPrice).toFixed(4)} SOL</>
@@ -188,7 +188,7 @@ function Payment({ onBack, orderData }) {
                     <Typography sx={{ color: 'var(--text-secondary)' }}>Merchant Fee (2%):</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography sx={{ color: 'var(--text-primary)' }}>
+                    <Typography sx={{ color: '#111' }}>
                       ${totalFees.merchantFee.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.merchantFee / solPrice).toFixed(4)} SOL</>
@@ -201,7 +201,7 @@ function Payment({ onBack, orderData }) {
                     <Typography sx={{ color: 'var(--text-secondary)' }}>Site Fee (2%):</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography sx={{ color: 'var(--text-primary)' }}>
+                    <Typography sx={{ color: '#111' }}>
                       ${totalFees.siteFee.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.siteFee / solPrice).toFixed(4)} SOL</>
@@ -299,7 +299,9 @@ function Payment({ onBack, orderData }) {
                 value={txnInput}
                 onChange={e => setTxnInput(e.target.value)}
                 placeholder="Transaction ID or Solscan link"
-                style={{ width: '100%', padding: 8, marginBottom: 12, borderRadius: 4, border: '1px solid #ccc' }}
+                style={{ width: '100%', padding: 8, marginBottom: 12, borderRadius: 4, border: '1px solid #ccc',
+                  color: '#111', background: '#fff',
+                }}
                 disabled={verifyLoading || paymentStatus === 'paid'}
               />
               <Button

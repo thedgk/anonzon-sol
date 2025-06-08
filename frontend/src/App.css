@@ -141,7 +141,7 @@
   color: var(--text-secondary) !important;
 }
 
-.MuiInputBase-input {
+input, textarea, .MuiInputBase-input {
   color: var(--text-primary) !important;
 }
 
