@@ -48,7 +48,7 @@ function ProductVerification({ onNext, updateOrderData }) {
 
   return (
     <Box className="privacy-container">
-      <Typography variant="h5" className="privacy-title" gutterBottom>
+      <Typography variant="h5" className="privacy-title" gutterBottom sx={{ color: 'var(--text-primary)' }}>
         Enter Product URL
       </Typography>
 
@@ -63,6 +63,15 @@ function ProductVerification({ onNext, updateOrderData }) {
               placeholder="https://amazon.com/product-url"
               required
               className="privacy-input"
+              sx={{
+                input: { color: 'var(--text-primary) !important' },
+                label: { color: 'var(--text-secondary) !important' },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: 'var(--border-color)' },
+                  '&:hover fieldset': { borderColor: 'var(--accent-color)' },
+                  '&.Mui-focused fieldset': { borderColor: 'var(--accent-color)' },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -99,28 +108,21 @@ function ProductVerification({ onNext, updateOrderData }) {
       )}
 
       {product && (
-        <Card className="privacy-card fade-in">
+        <Card className="privacy-card fade-in" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3 }}>
           <CardMedia
             component="img"
             height="200"
             image={product.image}
             alt={product.title}
-            sx={{ 
-              objectFit: 'contain',
-              backgroundColor: 'var(--primary-bg)',
-              borderRadius: '8px 8px 0 0'
-            }}
+            sx={{ objectFit: 'contain', borderRadius: 3, width: 'auto', maxWidth: 320, mb: 2, background: 'none' }}
           />
-          <CardContent>
+          <CardContent sx={{ textAlign: 'center' }}>
             <Typography variant="h6" className="privacy-subtitle" gutterBottom>
               {product.title}
             </Typography>
             <Typography 
               variant="h5" 
-              sx={{ 
-                color: 'var(--accent-color)',
-                fontWeight: 700
-              }}
+              sx={{ color: 'var(--accent-color)', fontWeight: 700 }}
             >
               ${product.price}
             </Typography>
@@ -129,30 +131,15 @@ function ProductVerification({ onNext, updateOrderData }) {
                 variant="contained"
                 onClick={handleConfirm}
                 className="privacy-button"
-                sx={{
-                  mr: 1,
-                  background: 'var(--privacy-gradient)',
-                  '&:hover': {
-                    background: 'var(--accent-color)'
-                  }
-                }}
+                sx={{ mr: 1, background: 'var(--privacy-gradient)', '&:hover': { background: 'var(--accent-color)' } }}
               >
                 Yes, add this product
               </Button>
               <Button
                 variant="outlined"
-                onClick={() => {
-                  setProduct(null);
-                  setUrl('');
-                }}
+                onClick={() => { setProduct(null); setUrl(''); }}
                 className="privacy-button"
-                sx={{
-                  borderColor: 'var(--border-color)',
-                  '&:hover': {
-                    borderColor: 'var(--accent-color)',
-                    backgroundColor: 'rgba(74, 158, 255, 0.08)'
-                  }
-                }}
+                sx={{ borderColor: 'var(--border-color)', '&:hover': { borderColor: 'var(--accent-color)', backgroundColor: 'rgba(74, 158, 255, 0.08)' } }}
               >
                 No, try again
               </Button>

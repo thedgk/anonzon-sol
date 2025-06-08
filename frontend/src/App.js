@@ -6,6 +6,9 @@ import Payment from './components/Payment';
 import OrderConfirmed from './components/OrderConfirmed';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import RevShare from './components/RevShare';
+import Socials from './components/Socials';
+import HowItWorks from './components/HowItWorks';
 
 const steps = ['Product Verification', 'Shipping Information', 'Payment'];
 
@@ -105,7 +108,7 @@ function App() {
                           bgcolor: 'transparent',
                           '.MuiStepLabel-label': { 
                             fontWeight: 600,
-                            color: 'var(--text-primary)'
+                            color: 'var(--text-primary) !important',
                           },
                           '.MuiStepIcon-root': { 
                             color: 'var(--accent-color) !important'
@@ -136,6 +139,9 @@ function App() {
             </Container>
           } />
           <Route path="/order-confirmed" element={<OrderConfirmed />} />
+          <Route path="/revshare" element={<RevShare />} />
+          <Route path="/socials" element={<Socials />} />
+          <Route path="/howitworks" element={<HowItWorks />} />
         </Routes>
       </Box>
     </>
