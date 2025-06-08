@@ -1,5 +1,8 @@
 .App {
   text-align: center;
+  min-height: 100vh;
+  background: var(--privacy-gradient);
+  color: var(--text-primary);
 }
 
 .App-logo {
@@ -14,18 +17,25 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: var(--primary-bg);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: var(--text-primary);
+  padding: 2rem;
 }
 
 .App-link {
-  color: #61dafb;
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+.App-link:hover {
+  color: var(--text-primary);
 }
 
 @keyframes App-logo-spin {
@@ -35,4 +45,240 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Privacy-focused layout components */
+.privacy-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: var(--text-primary);
+  background: var(--primary-bg);
+}
+
+.privacy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.privacy-section {
+  margin: 4rem 0;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in-out forwards;
+  color: var(--text-primary);
+  background: var(--secondary-bg);
+  border-radius: 8px;
+  padding: 2rem;
+  border: 1px solid var(--border-color);
+}
+
+.privacy-section:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.privacy-section:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Privacy-focused typography */
+.privacy-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
+}
+
+.privacy-subtitle {
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+/* Privacy-focused navigation */
+.privacy-nav {
+  background: var(--primary-bg);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.privacy-nav-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.privacy-nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.privacy-nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+.privacy-nav-link:hover {
+  color: var(--text-primary);
+}
+
+/* Form elements */
+.MuiInputBase-root {
+  background-color: var(--secondary-bg) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+}
+
+.MuiInputLabel-root {
+  color: var(--text-secondary) !important;
+}
+
+.MuiInputBase-input {
+  color: var(--text-primary) !important;
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: var(--border-color) !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--accent-color) !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--accent-color) !important;
+}
+
+/* Card elements */
+.MuiCard-root {
+  background-color: var(--secondary-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
+}
+
+.MuiCard-root:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.MuiCardContent-root {
+  color: var(--text-primary) !important;
+  padding: 1.5rem !important;
+}
+
+/* Alert elements */
+.MuiAlert-root {
+  background-color: var(--secondary-bg) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  margin: 1rem 0 !important;
+}
+
+.MuiAlert-standardError {
+  background-color: rgba(245, 101, 101, 0.1) !important;
+  color: var(--error-color) !important;
+  border: 1px solid var(--error-color) !important;
+}
+
+.MuiAlert-standardSuccess {
+  background-color: rgba(72, 187, 120, 0.1) !important;
+  color: var(--success-color) !important;
+  border: 1px solid var(--success-color) !important;
+}
+
+/* Modal elements */
+.MuiModal-root .MuiBackdrop-root {
+  background-color: rgba(10, 14, 23, 0.8) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+.MuiDialog-paper {
+  background-color: var(--secondary-bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Button elements */
+.MuiButton-root {
+  text-transform: none !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1.5rem !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.MuiButton-contained {
+  background: var(--privacy-gradient) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.MuiButton-contained:hover {
+  background: var(--accent-color) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.MuiButton-outlined {
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.MuiButton-outlined:hover {
+  border-color: var(--accent-color) !important;
+  background-color: rgba(74, 158, 255, 0.08) !important;
+  color: var(--accent-color) !important;
+}
+
+/* Divider elements */
+.MuiDivider-root {
+  border-color: var(--border-color) !important;
+  margin: 1.5rem 0 !important;
+}
+
+/* Typography elements */
+.MuiTypography-root {
+  color: var(--text-primary) !important;
+}
+
+.MuiTypography-h1,
+.MuiTypography-h2,
+.MuiTypography-h3,
+.MuiTypography-h4,
+.MuiTypography-h5,
+.MuiTypography-h6 {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+}
+
+.MuiTypography-body1,
+.MuiTypography-body2 {
+  color: var(--text-secondary) !important;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out forwards;
 }

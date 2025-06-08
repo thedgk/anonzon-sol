@@ -110,38 +110,38 @@ function Payment({ onBack, orderData }) {
   };
 
   return (
-    <Box>
-      <Typography variant="h5" gutterBottom>
+    <Box className="privacy-container">
+      <Typography variant="h5" className="privacy-title" gutterBottom>
         Payment
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card className="privacy-card">
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" className="privacy-subtitle" gutterBottom>
                 Order Summary
               </Typography>
               {orderData.products.map((product, idx) => (
-                <Box key={idx} sx={{ mb: 2 }}>
+                <Box key={idx} sx={{ mb: 2 }} className="fade-in">
                   <CardMedia
                     component="img"
                     height="120"
                     image={product.image}
                     alt={product.title}
-                    sx={{ objectFit: 'contain', mb: 1 }}
+                    sx={{ objectFit: 'contain', mb: 1, borderRadius: '8px' }}
                   />
-                  <Typography variant="subtitle1">{product.title}</Typography>
-                  <Typography variant="body2">USD: ${product.price.toFixed(2)} {solPrice && (
+                  <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)' }}>{product.title}</Typography>
+                  <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>USD: ${product.price.toFixed(2)} {solPrice && (
                     <>
                       &nbsp;|&nbsp; SOL: {(product.price / solPrice).toFixed(4)}
                     </>
                   )}</Typography>
                 </Box>
               ))}
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+              <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ mt: 2 }}>
                 Shipping Information
               </Typography>
-              <Typography>
+              <Typography sx={{ color: 'var(--text-secondary)' }}>
                 {orderData.shippingData.name}<br />
                 {orderData.shippingData.address.street}<br />
                 {orderData.shippingData.address.city}, {orderData.shippingData.address.state} {orderData.shippingData.address.zip}<br />
@@ -151,18 +151,18 @@ function Payment({ onBack, orderData }) {
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card className="privacy-card">
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" className="privacy-subtitle" gutterBottom>
                 Price Breakdown
               </Typography>
               <Box sx={{ mb: 2 }}>
                 <Grid container justifyContent="space-between">
                   <Grid item>
-                    <Typography>Base Price:</Typography>
+                    <Typography sx={{ color: 'var(--text-secondary)' }}>Base Price:</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography>
+                    <Typography sx={{ color: 'var(--text-primary)' }}>
                       ${totalFees.basePrice.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.basePrice / solPrice).toFixed(4)} SOL</>
@@ -172,10 +172,10 @@ function Payment({ onBack, orderData }) {
                 </Grid>
                 <Grid container justifyContent="space-between">
                   <Grid item>
-                    <Typography>Shipping Fee:</Typography>
+                    <Typography sx={{ color: 'var(--text-secondary)' }}>Shipping Fee:</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography>
+                    <Typography sx={{ color: 'var(--text-primary)' }}>
                       ${totalFees.shippingFee.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.shippingFee / solPrice).toFixed(4)} SOL</>
@@ -185,10 +185,10 @@ function Payment({ onBack, orderData }) {
                 </Grid>
                 <Grid container justifyContent="space-between">
                   <Grid item>
-                    <Typography>Merchant Fee (2%):</Typography>
+                    <Typography sx={{ color: 'var(--text-secondary)' }}>Merchant Fee (2%):</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography>
+                    <Typography sx={{ color: 'var(--text-primary)' }}>
                       ${totalFees.merchantFee.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.merchantFee / solPrice).toFixed(4)} SOL</>
@@ -198,10 +198,10 @@ function Payment({ onBack, orderData }) {
                 </Grid>
                 <Grid container justifyContent="space-between">
                   <Grid item>
-                    <Typography>Site Fee (2%):</Typography>
+                    <Typography sx={{ color: 'var(--text-secondary)' }}>Site Fee (2%):</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography>
+                    <Typography sx={{ color: 'var(--text-primary)' }}>
                       ${totalFees.siteFee.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.siteFee / solPrice).toFixed(4)} SOL</>
@@ -209,13 +209,13 @@ function Payment({ onBack, orderData }) {
                     </Typography>
                   </Grid>
                 </Grid>
-                <Divider sx={{ my: 1 }} />
+                <Divider sx={{ my: 1, borderColor: 'var(--border-color)' }} />
                 <Grid container justifyContent="space-between">
                   <Grid item>
-                    <Typography variant="h6">Total:</Typography>
+                    <Typography variant="h6" sx={{ color: 'var(--text-primary)' }}>Total:</Typography>
                   </Grid>
                   <Grid item>
-                    <Typography variant="h6">
+                    <Typography variant="h6" sx={{ color: 'var(--accent-color)' }}>
                       ${totalFees.totalPrice.toFixed(2)}
                       {solPrice && (
                         <>&nbsp;|&nbsp;{(totalFees.totalPrice / solPrice).toFixed(4)} SOL</>
@@ -229,21 +229,43 @@ function Payment({ onBack, orderData }) {
                   variant="outlined"
                   onClick={onBack}
                   disabled={loading}
+                  className="privacy-button"
+                  sx={{
+                    borderColor: 'var(--border-color)',
+                    '&:hover': {
+                      borderColor: 'var(--accent-color)',
+                      backgroundColor: 'rgba(74, 158, 255, 0.08)'
+                    }
+                  }}
                 >
                   Back
                 </Button>
                 <Button
                   variant="contained"
-                  color="primary"
                   onClick={handlePayNow}
                   disabled={loading || !solAmount}
                   fullWidth
+                  className="privacy-button"
+                  sx={{
+                    background: 'var(--privacy-gradient)',
+                    '&:hover': {
+                      background: 'var(--accent-color)'
+                    }
+                  }}
                 >
                   {loading ? 'Processing...' : 'Pay Now'}
                 </Button>
               </Box>
               {error && (
-                <Alert severity="error" sx={{ mt: 2 }}>
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    mt: 2,
+                    backgroundColor: 'rgba(245, 101, 101, 0.1)',
+                    color: 'var(--error-color)',
+                    border: '1px solid var(--error-color)'
+                  }}
+                >
                   {error}
                 </Alert>
               )}
@@ -251,9 +273,18 @@ function Payment({ onBack, orderData }) {
           </Card>
         </Grid>
       </Grid>
-      {/* Payment Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', bgcolor: 'background.paper', boxShadow: 24, p: 4, borderRadius: 2, minWidth: 350, textAlign: 'center' }}>
+      <Modal
+        open={modalOpen}
+        onClose={() => !loading && setModalOpen(false)}
+        className="privacy-modal"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'rgba(10, 14, 23, 0.8)'
+        }}
+      >
+        <Box className="privacy-card" sx={{ maxWidth: 500, width: '90%', p: 3 }}>
           <Typography variant="h6" gutterBottom>Send Payment</Typography>
           {invoice && (
             <>
