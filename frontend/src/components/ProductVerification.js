@@ -108,30 +108,64 @@ function ProductVerification({ onNext, updateOrderData }) {
       )}
 
       {product && (
-        <Card className="privacy-card fade-in" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3 }}>
+        <Card className="privacy-card fade-in" sx={{
+          background: 'rgba(30, 34, 45, 0.55)',
+          backdropFilter: 'blur(18px)',
+          border: '1.5px solid rgba(255,255,255,0.13)',
+          borderRadius: 5,
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+          p: 0,
+          overflow: 'visible',
+          minHeight: 320,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          mt: 4,
+        }}>
           <CardMedia
             component="img"
-            height="200"
+            height="140"
             image={product.image}
             alt={product.title}
-            sx={{ objectFit: 'contain', borderRadius: 3, width: 'auto', maxWidth: 320, mb: 2, background: 'none' }}
+            sx={{
+              width: 140,
+              height: 140,
+              objectFit: 'contain',
+              borderRadius: 3.5,
+              background: 'rgba(255,255,255,0.10)',
+              boxShadow: '0 2px 8px 0 rgba(16,22,36,0.10)',
+              mt: 3,
+              mb: 2,
+            }}
           />
-          <CardContent sx={{ textAlign: 'center' }}>
-            <Typography variant="h6" className="privacy-subtitle" gutterBottom>
+          <CardContent sx={{ textAlign: 'center', p: 3 }}>
+            <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ fontWeight: 700, fontSize: 22, color: 'var(--text-primary)', mb: 1 }}>
               {product.title}
             </Typography>
-            <Typography 
-              variant="h5" 
-              sx={{ color: 'var(--accent-color)', fontWeight: 700 }}
-            >
+            <Typography variant="h5" sx={{ color: 'var(--accent-color)', fontWeight: 900, fontSize: 28, mb: 1, textShadow: '0 1px 8px rgba(255,153,0,0.10)' }}>
               ${product.price}
             </Typography>
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 2 }}>
               <Button
                 variant="contained"
                 onClick={handleConfirm}
                 className="privacy-button"
-                sx={{ mr: 1, background: 'var(--privacy-gradient)', '&:hover': { background: 'var(--accent-color)' } }}
+                sx={{
+                  borderRadius: 99,
+                  background: 'linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-hover) 100%)',
+                  color: '#fff',
+                  fontWeight: 800,
+                  fontSize: 16,
+                  px: 4,
+                  py: 1.5,
+                  boxShadow: '0 2px 8px 0 rgba(255,153,0,0.12)',
+                  transition: 'all 0.18s',
+                  '&:hover': {
+                    background: 'linear-gradient(90deg, var(--accent-color-hover) 0%, var(--accent-color) 100%)',
+                    boxShadow: '0 4px 16px 0 rgba(255,153,0,0.18)',
+                  }
+                }}
               >
                 Yes, add this product
               </Button>
@@ -139,7 +173,24 @@ function ProductVerification({ onNext, updateOrderData }) {
                 variant="outlined"
                 onClick={() => { setProduct(null); setUrl(''); }}
                 className="privacy-button"
-                sx={{ borderColor: 'var(--border-color)', '&:hover': { borderColor: 'var(--accent-color)', backgroundColor: 'rgba(74, 158, 255, 0.08)' } }}
+                sx={{
+                  borderRadius: 99,
+                  borderColor: 'var(--accent-color)',
+                  color: 'var(--accent-color)',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  px: 4,
+                  py: 1.5,
+                  background: 'rgba(255,255,255,0.08)',
+                  boxShadow: '0 2px 8px 0 rgba(255,153,0,0.08)',
+                  transition: 'all 0.18s',
+                  '&:hover': {
+                    borderColor: 'var(--accent-color)',
+                    color: '#fff',
+                    background: 'linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-hover) 100%)',
+                    boxShadow: '0 4px 16px 0 rgba(255,153,0,0.16)',
+                  }
+                }}
               >
                 No, try again
               </Button>

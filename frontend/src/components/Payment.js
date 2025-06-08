@@ -116,32 +116,51 @@ function Payment({ onBack, orderData }) {
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Card className="privacy-card">
-            <CardContent>
-              <Typography variant="h6" className="privacy-subtitle" gutterBottom>
+          <Card className="privacy-card fade-in" sx={{
+            background: 'rgba(30, 34, 45, 0.55)',
+            backdropFilter: 'blur(18px)',
+            border: '1.5px solid rgba(255,255,255,0.13)',
+            borderRadius: 5,
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+            p: 0,
+            overflow: 'visible',
+            minHeight: 320,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ fontWeight: 700, fontSize: 22, color: 'var(--text-primary)', mb: 2 }}>
                 Order Summary
               </Typography>
               {orderData.products.map((product, idx) => (
-                <Box key={idx} sx={{ mb: 2 }} className="fade-in">
+                <Box key={idx} sx={{ mb: 3, display: 'flex', alignItems: 'center', bgcolor: 'rgba(255,255,255,0.04)', borderRadius: 4, p: 2.5, boxShadow: '0 2px 8px 0 rgba(16,22,36,0.10)', transition: 'transform 0.15s', '&:hover': { transform: 'scale(1.025)', boxShadow: '0 4px 16px 0 rgba(16,22,36,0.16)' } }}>
                   <CardMedia
                     component="img"
-                    height="120"
+                    height="84"
                     image={product.image}
                     alt={product.title}
-                    sx={{ objectFit: 'contain', mb: 1, borderRadius: '8px' }}
+                    sx={{ width: 84, objectFit: 'contain', borderRadius: 3.5, background: 'rgba(255,255,255,0.10)', boxShadow: '0 2px 8px 0 rgba(16,22,36,0.10)', mr: 3 }}
                   />
-                  <Typography variant="subtitle1" sx={{ color: '#111' }}>{product.title}</Typography>
-                  <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>USD: ${product.price.toFixed(2)} {solPrice && (
-                    <>
-                      &nbsp;|&nbsp; SOL: {(product.price / solPrice).toFixed(4)}
-                    </>
-                  )}</Typography>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 17, mb: 0.5, lineHeight: 1.3, whiteSpace: 'normal', wordBreak: 'break-word', letterSpacing: 0.1 }}>
+                      {product.title}
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'var(--accent-color)', fontWeight: 800, fontSize: 22, mb: 0.5, letterSpacing: 0.2, textShadow: '0 1px 8px rgba(255,153,0,0.10)' }}>
+                      ${product.price.toFixed(2)}
+                    </Typography>
+                    {solPrice && (
+                      <Typography variant="body2" sx={{ color: 'var(--accent-color)', fontWeight: 500, fontSize: 15, opacity: 0.8 }}>
+                        { (product.price / solPrice).toFixed(4) } SOL
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
               ))}
-              <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ mt: 2 }}>
+              <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ mt: 2, fontWeight: 700, fontSize: 20, color: 'var(--text-primary)' }}>
                 Shipping Information
               </Typography>
-              <Typography sx={{ color: '#111' }}>
+              <Typography sx={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: 16, mb: 1 }}>
                 {orderData.shippingData.name}<br />
                 {orderData.shippingData.address.street}<br />
                 {orderData.shippingData.address.city}, {orderData.shippingData.address.state} {orderData.shippingData.address.zip}<br />
@@ -151,77 +170,47 @@ function Payment({ onBack, orderData }) {
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card className="privacy-card">
-            <CardContent>
-              <Typography variant="h6" className="privacy-subtitle" gutterBottom>
+          <Card className="privacy-card fade-in" sx={{
+            background: 'rgba(30, 34, 45, 0.55)',
+            backdropFilter: 'blur(18px)',
+            border: '1.5px solid rgba(255,255,255,0.13)',
+            borderRadius: 5,
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+            p: 0,
+            overflow: 'visible',
+            minHeight: 320,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ fontWeight: 700, fontSize: 22, color: 'var(--text-primary)', mb: 2 }}>
                 Price Breakdown
               </Typography>
               <Box sx={{ mb: 2 }}>
-                <Grid container justifyContent="space-between">
-                  <Grid item>
-                    <Typography sx={{ color: 'var(--text-secondary)' }}>Base Price:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography sx={{ color: '#111' }}>
-                      ${totalFees.basePrice.toFixed(2)}
-                      {solPrice && (
-                        <>&nbsp;|&nbsp;{(totalFees.basePrice / solPrice).toFixed(4)} SOL</>
-                      )}
-                    </Typography>
-                  </Grid>
+                <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                  <Grid item><Typography sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Base Price:</Typography></Grid>
+                  <Grid item><Typography sx={{ color: 'var(--text-primary)', fontWeight: 700 }}>${totalFees.basePrice.toFixed(2)}{solPrice && (<>&nbsp;|&nbsp;{(totalFees.basePrice / solPrice).toFixed(4)} SOL</>)}</Typography></Grid>
                 </Grid>
-                <Grid container justifyContent="space-between">
-                  <Grid item>
-                    <Typography sx={{ color: 'var(--text-secondary)' }}>Shipping Fee:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography sx={{ color: '#111' }}>
-                      ${totalFees.shippingFee.toFixed(2)}
-                      {solPrice && (
-                        <>&nbsp;|&nbsp;{(totalFees.shippingFee / solPrice).toFixed(4)} SOL</>
-                      )}
-                    </Typography>
-                  </Grid>
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.10)', my: 0.5 }} />
+                <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                  <Grid item><Typography sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Shipping Fee:</Typography></Grid>
+                  <Grid item><Typography sx={{ color: 'var(--text-primary)', fontWeight: 700 }}>${totalFees.shippingFee.toFixed(2)}{solPrice && (<>&nbsp;|&nbsp;{(totalFees.shippingFee / solPrice).toFixed(4)} SOL</>)}</Typography></Grid>
                 </Grid>
-                <Grid container justifyContent="space-between">
-                  <Grid item>
-                    <Typography sx={{ color: 'var(--text-secondary)' }}>Merchant Fee (2%):</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography sx={{ color: '#111' }}>
-                      ${totalFees.merchantFee.toFixed(2)}
-                      {solPrice && (
-                        <>&nbsp;|&nbsp;{(totalFees.merchantFee / solPrice).toFixed(4)} SOL</>
-                      )}
-                    </Typography>
-                  </Grid>
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.10)', my: 0.5 }} />
+                <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                  <Grid item><Typography sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Merchant Fee (2%):</Typography></Grid>
+                  <Grid item><Typography sx={{ color: 'var(--text-primary)', fontWeight: 700 }}>${totalFees.merchantFee.toFixed(2)}{solPrice && (<>&nbsp;|&nbsp;{(totalFees.merchantFee / solPrice).toFixed(4)} SOL</>)}</Typography></Grid>
                 </Grid>
-                <Grid container justifyContent="space-between">
-                  <Grid item>
-                    <Typography sx={{ color: 'var(--text-secondary)' }}>Site Fee (2%):</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography sx={{ color: '#111' }}>
-                      ${totalFees.siteFee.toFixed(2)}
-                      {solPrice && (
-                        <>&nbsp;|&nbsp;{(totalFees.siteFee / solPrice).toFixed(4)} SOL</>
-                      )}
-                    </Typography>
-                  </Grid>
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.10)', my: 0.5 }} />
+                <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                  <Grid item><Typography sx={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Site Fee (2%):</Typography></Grid>
+                  <Grid item><Typography sx={{ color: 'var(--text-primary)', fontWeight: 700 }}>${totalFees.siteFee.toFixed(2)}{solPrice && (<>&nbsp;|&nbsp;{(totalFees.siteFee / solPrice).toFixed(4)} SOL</>)}</Typography></Grid>
                 </Grid>
-                <Divider sx={{ my: 1, borderColor: 'var(--border-color)' }} />
-                <Grid container justifyContent="space-between">
-                  <Grid item>
-                    <Typography variant="h6" sx={{ color: 'var(--text-primary)' }}>Total:</Typography>
-                  </Grid>
-                  <Grid item>
-                    <Typography variant="h6" sx={{ color: 'var(--accent-color)' }}>
-                      ${totalFees.totalPrice.toFixed(2)}
-                      {solPrice && (
-                        <>&nbsp;|&nbsp;{(totalFees.totalPrice / solPrice).toFixed(4)} SOL</>
-                      )}
-                    </Typography>
-                  </Grid>
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.18)', my: 1 }} />
+                <Grid container justifyContent="space-between" alignItems="center">
+                  <Grid item><Typography variant="h6" sx={{ color: 'var(--accent-color)', fontWeight: 900, fontSize: 22 }}>Total:</Typography></Grid>
+                  <Grid item><Typography variant="h6" sx={{ color: 'var(--accent-color)', fontWeight: 900, fontSize: 22 }}>${totalFees.totalPrice.toFixed(2)}{solPrice && (<>&nbsp;|&nbsp;{(totalFees.totalPrice / solPrice).toFixed(4)} SOL</>)}</Typography></Grid>
                 </Grid>
               </Box>
               <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
@@ -231,10 +220,21 @@ function Payment({ onBack, orderData }) {
                   disabled={loading}
                   className="privacy-button"
                   sx={{
-                    borderColor: 'var(--border-color)',
+                    borderRadius: 99,
+                    borderColor: 'var(--accent-color)',
+                    color: 'var(--accent-color)',
+                    fontWeight: 700,
+                    fontSize: 16,
+                    px: 4,
+                    py: 1.5,
+                    background: 'rgba(255,255,255,0.08)',
+                    boxShadow: '0 2px 8px 0 rgba(255,153,0,0.08)',
+                    transition: 'all 0.18s',
                     '&:hover': {
                       borderColor: 'var(--accent-color)',
-                      backgroundColor: 'rgba(74, 158, 255, 0.08)'
+                      color: '#fff',
+                      background: 'linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-hover) 100%)',
+                      boxShadow: '0 4px 16px 0 rgba(255,153,0,0.16)',
                     }
                   }}
                 >
@@ -247,9 +247,18 @@ function Payment({ onBack, orderData }) {
                   fullWidth
                   className="privacy-button"
                   sx={{
-                    background: 'var(--privacy-gradient)',
+                    borderRadius: 99,
+                    background: 'linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-hover) 100%)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: 18,
+                    px: 4,
+                    py: 1.5,
+                    boxShadow: '0 2px 8px 0 rgba(255,153,0,0.12)',
+                    transition: 'all 0.18s',
                     '&:hover': {
-                      background: 'var(--accent-color)'
+                      background: 'linear-gradient(90deg, var(--accent-color-hover) 0%, var(--accent-color) 100%)',
+                      boxShadow: '0 4px 16px 0 rgba(255,153,0,0.18)',
                     }
                   }}
                 >
@@ -257,9 +266,9 @@ function Payment({ onBack, orderData }) {
                 </Button>
               </Box>
               {error && (
-                <Alert 
-                  severity="error" 
-                  sx={{ 
+                <Alert
+                  severity="error"
+                  sx={{
                     mt: 2,
                     backgroundColor: 'rgba(245, 101, 101, 0.1)',
                     color: 'var(--error-color)',

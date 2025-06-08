@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -8,8 +8,11 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Alert
+  Alert,
+  CircularProgress,
+  Autocomplete
 } from '@mui/material';
+import { useLoadScript } from '@react-google-maps/api';
 
 // Add PALETTE for consistent color usage
 const PALETTE = {
@@ -21,6 +24,10 @@ const PALETTE = {
   text: '#F3F6FA',
   textSecondary: '#AEB6C3',
 };
+
+const GOOGLE_MAPS_API_KEY = 'AIzaSyA3WPPU1l0mvRnouXleJa3JZZknQBNGvLw';
+
+const libraries = ['places'];
 
 function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialShippingData, products, resetForNewProduct }) {
   const [shippingData, setShippingData] = useState(initialShippingData || {
@@ -36,6 +43,74 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
     }
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [autocomplete, setAutocomplete] = useState(null);
+  const [searchValue, setSearchValue] = useState('');
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries
+  });
+
+  useEffect(() => {
+    if (isLoaded && !loadError) {
+      const input = document.getElementById('address-search');
+      if (input) {
+        const autocompleteInstance = new window.google.maps.places.Autocomplete(input, {
+          types: ['address'],
+          componentRestrictions: { country: 'us' }
+        });
+
+        autocompleteInstance.addListener('place_changed', () => {
+          const place = autocompleteInstance.getPlace();
+          if (place.address_components) {
+            let streetNumber = '';
+            let streetName = '';
+            let city = '';
+            let state = '';
+            let zip = '';
+            let country = '';
+
+            for (const component of place.address_components) {
+              const types = component.types;
+
+              if (types.includes('street_number')) {
+                streetNumber = component.long_name;
+              }
+              if (types.includes('route')) {
+                streetName = component.long_name;
+              }
+              if (types.includes('locality')) {
+                city = component.long_name;
+              }
+              if (types.includes('administrative_area_level_1')) {
+                state = component.short_name;
+              }
+              if (types.includes('postal_code')) {
+                zip = component.long_name;
+              }
+              if (types.includes('country')) {
+                country = component.long_name;
+              }
+            }
+
+            setShippingData(prev => ({
+              ...prev,
+              address: {
+                street: `${streetNumber} ${streetName}`.trim(),
+                city,
+                state,
+                zip,
+                country
+              }
+            }));
+          }
+        });
+
+        setAutocomplete(autocompleteInstance);
+      }
+    }
+  }, [isLoaded, loadError]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -78,6 +153,14 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
     resetForNewProduct();
   };
 
+  if (loadError) {
+    return (
+      <Alert severity="error" sx={{ mt: 2 }}>
+        Error loading Google Maps API. Please try again later.
+      </Alert>
+    );
+  }
+
   return (
     <Box className="privacy-container">
       <Typography variant="h5" className="privacy-title" gutterBottom sx={{ color: 'var(--text-primary)' }}>
@@ -98,7 +181,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
             />
             <TextField
               fullWidth
-              label="Email (optional)"
+              label="Email (optional but used for confirmation and tracking)"
               name="email"
               value={shippingData.email}
               onChange={handleChange}
@@ -117,6 +200,16 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
             <Typography variant="h6" className="privacy-subtitle" sx={{ mt: 2, color: 'var(--text-primary)' }}>
               Shipping Address
             </Typography>
+            <TextField
+              fullWidth
+              id="address-search"
+              label="Search Address"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="privacy-input"
+              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
+              placeholder="Start typing your address..."
+            />
             <TextField
               fullWidth
               label="Street Address"
@@ -200,85 +293,103 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
                 type="submit"
                 className="privacy-button"
                 sx={{
-                  background: 'var(--privacy-gradient)',
+                  backgroundColor: 'var(--accent-color)',
                   '&:hover': {
-                    background: 'var(--accent-color)'
+                    backgroundColor: 'var(--accent-color-hover)'
                   }
                 }}
               >
-                Continue to Payment
+                Continue
               </Button>
             </Box>
           </form>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card className="privacy-card">
-            <CardContent>
-              <Typography variant="h6" className="privacy-subtitle" gutterBottom>
+          <Card className="privacy-card fade-in" sx={{
+            background: 'rgba(30, 34, 45, 0.55)',
+            backdropFilter: 'blur(18px)',
+            border: '1.5px solid rgba(255,255,255,0.13)',
+            borderRadius: 5,
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+            p: 0,
+            overflow: 'visible',
+            minHeight: 320,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ fontWeight: 700, fontSize: 22, color: 'var(--text-primary)', mb: 2 }}>
                 Product Summary
               </Typography>
               {products && products.length > 0 ? (
                 products.map((product, idx) => (
-                  <Box 
-                    key={idx} 
+                  <Box
+                    key={idx}
                     className="fade-in"
-                    sx={{ 
-                      mb: 3, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      bgcolor: 'var(--secondary-bg)', 
-                      borderRadius: 2, 
-                      p: 2, 
-                      boxShadow: '0 1px 4px 0 rgba(16,22,36,0.10)'
+                    sx={{
+                      mb: 3,
+                      display: 'flex',
+                      alignItems: 'center',
+                      bgcolor: 'rgba(255,255,255,0.04)',
+                      borderRadius: 4,
+                      p: 2.5,
+                      boxShadow: '0 2px 8px 0 rgba(16,22,36,0.10)',
+                      transition: 'transform 0.15s',
+                      '&:hover': { transform: 'scale(1.025)', boxShadow: '0 4px 16px 0 rgba(16,22,36,0.16)' },
                     }}
                   >
-                    <Box sx={{ 
-                      minWidth: 72, 
-                      maxWidth: 72, 
-                      minHeight: 72, 
-                      maxHeight: 72, 
-                      borderRadius: 2, 
-                      overflow: 'hidden', 
-                      bgcolor: 'var(--primary-bg)', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      mr: 2 
+                    <Box sx={{
+                      minWidth: 84,
+                      maxWidth: 84,
+                      minHeight: 84,
+                      maxHeight: 84,
+                      borderRadius: 3.5,
+                      overflow: 'hidden',
+                      bgcolor: 'rgba(255,255,255,0.10)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mr: 3,
+                      boxShadow: '0 2px 8px 0 rgba(16,22,36,0.10)',
                     }}>
                       <img
                         src={product.image}
                         alt={product.title}
-                        style={{ 
-                          width: '100%', 
-                          height: '100%', 
-                          objectFit: 'contain', 
-                          borderRadius: 8, 
-                          background: 'var(--primary-bg)' 
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          borderRadius: 16,
+                          background: 'rgba(255,255,255,0.10)'
                         }}
                       />
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography 
-                        variant="subtitle1" 
-                        sx={{ 
-                          color: 'var(--text-primary)', 
-                          fontWeight: 600, 
-                          fontSize: 15, 
-                          mb: 0.5, 
-                          lineHeight: 1.3, 
-                          whiteSpace: 'normal', 
-                          wordBreak: 'break-word' 
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          color: 'var(--text-primary)',
+                          fontWeight: 700,
+                          fontSize: 17,
+                          mb: 0.5,
+                          lineHeight: 1.3,
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
+                          letterSpacing: 0.1,
                         }}
                       >
                         {product.title}
                       </Typography>
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
-                          color: 'var(--accent-color)', 
-                          fontWeight: 700, 
-                          fontSize: 18, 
-                          mb: 0.5 
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: 'var(--accent-color)',
+                          fontWeight: 800,
+                          fontSize: 22,
+                          mb: 0.5,
+                          letterSpacing: 0.2,
+                          textShadow: '0 1px 8px rgba(255,153,0,0.10)'
                         }}
                       >
                         ${product.price}
@@ -298,12 +409,20 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
                 sx={{
                   mt: 2,
                   borderRadius: 99,
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--text-secondary)',
+                  borderColor: 'var(--accent-color)',
+                  color: 'var(--accent-color)',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  px: 4,
+                  py: 1.5,
+                  background: 'rgba(255,255,255,0.08)',
+                  boxShadow: '0 2px 8px 0 rgba(255,153,0,0.08)',
+                  transition: 'all 0.18s',
                   '&:hover': {
                     borderColor: 'var(--accent-color)',
-                    color: 'var(--accent-color)',
-                    backgroundColor: 'rgba(74, 158, 255, 0.08)'
+                    color: '#fff',
+                    background: 'linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-hover) 100%)',
+                    boxShadow: '0 4px 16px 0 rgba(255,153,0,0.16)',
                   }
                 }}
               >
