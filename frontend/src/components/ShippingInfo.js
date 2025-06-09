@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   TextField,
@@ -10,9 +10,12 @@ import {
   CardMedia,
   Alert,
   CircularProgress,
-  Autocomplete
+  Autocomplete,
+  Paper,
+  Divider
 } from '@mui/material';
-import { useLoadScript } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
+// Removed useLoadScript to prevent DOM conflicts
 
 // Add PALETTE for consistent color usage
 const PALETTE = {
@@ -25,97 +28,213 @@ const PALETTE = {
   textSecondary: '#AEB6C3',
 };
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyA3WPPU1l0mvRnouXleJa3JZZknQBNGvLw';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyArrsSbCnKyupS_YKaCNBHJsf5wUnE_K3c';
 
-const libraries = ['places'];
+// Global flag to prevent multiple loads
+let googleMapsLoading = false;
+let googleMapsLoaded = false;
 
 function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialShippingData, products, resetForNewProduct }) {
-  const [shippingData, setShippingData] = useState(initialShippingData || {
-    name: '',
-    email: '',
-    phone: '',
+  console.log('🔍 ShippingInfo component rendering...');
+  
+  // Form state - this should always work
+  const [shippingData, setShippingData] = useState({
+    name: initialShippingData?.name || '',
+    email: initialShippingData?.email || '',
+    phone: initialShippingData?.phone || '',
     address: {
-      street: '',
-      city: '',
-      state: '',
-      zip: '',
-      country: ''
+      street: initialShippingData?.address?.street || '',
+      city: initialShippingData?.address?.city || '',
+      state: initialShippingData?.address?.state || '',
+      zip: initialShippingData?.address?.zip || '',
+      country: initialShippingData?.address?.country || 'US'
     }
   });
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [autocomplete, setAutocomplete] = useState(null);
-  const [searchValue, setSearchValue] = useState('');
 
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries
-  });
+  // Google Maps state - completely optional
+  const [showGoogleMaps, setShowGoogleMaps] = useState(false);
+  const [mapsReady, setMapsReady] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  
+  const mapContainerRef = useRef(null);
+  const autocompleteRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
 
+  // Simple timeout to try loading Google Maps (non-blocking)
   useEffect(() => {
-    if (isLoaded && !loadError) {
-      const input = document.getElementById('address-search');
-      if (input) {
-        const autocompleteInstance = new window.google.maps.places.Autocomplete(input, {
+    console.log('🔍 Starting Google Maps loading attempt...');
+    
+    // Set timeout to try Google Maps, but don't block the form
+    const timeoutId = setTimeout(() => {
+      console.log('⏰ Google Maps timeout reached, form is already available');
+    }, 3000);
+
+    // Try to load Google Maps as an enhancement only
+    const loadGoogleMapsOptional = () => {
+      try {
+        // Check if already loaded
+        if (window.google && window.google.maps) {
+          console.log('✅ Google Maps already available');
+          setShowGoogleMaps(true);
+          clearTimeout(timeoutId);
+          return;
+        }
+
+        // Check if script already exists
+        if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+          console.log('🔍 Google Maps script already exists, waiting...');
+          return;
+        }
+
+        console.log('🔄 Loading Google Maps script...');
+        
+        // Create global callback
+        window.initGoogleMapsSimple = () => {
+          console.log('✅ Google Maps loaded successfully');
+          setShowGoogleMaps(true);
+          clearTimeout(timeoutId);
+        };
+
+        // Create script
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMapsSimple&loading=async`;
+        script.async = true;
+        script.defer = true;
+        
+        script.onerror = () => {
+          console.log('❌ Google Maps failed to load, but form still works');
+          clearTimeout(timeoutId);
+        };
+        
+        document.head.appendChild(script);
+        
+      } catch (error) {
+        console.log('❌ Error loading Google Maps:', error.message);
+        clearTimeout(timeoutId);
+      }
+    };
+
+    // Try loading Google Maps, but don't block anything
+    loadGoogleMapsOptional();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  // Initialize Google Maps components when available
+  useEffect(() => {
+    if (!showGoogleMaps || !mapContainerRef.current) return;
+
+    console.log('🗺️ Initializing Google Maps components...');
+
+    const initializeMap = () => {
+      try {
+        // Create map
+        const map = new window.google.maps.Map(mapContainerRef.current, {
+          center: { lat: 40.749933, lng: -73.98633 },
+          zoom: 13,
+          mapTypeControl: false,
+        });
+
+        // Get autocomplete input
+        const input = document.getElementById('address-autocomplete');
+        if (!input) {
+          console.log('⚠️ Autocomplete input not found, retrying...');
+          setTimeout(initializeMap, 500);
+          return;
+        }
+
+        // Create autocomplete
+        const autocomplete = new window.google.maps.places.Autocomplete(input, {
+          fields: ['formatted_address', 'geometry', 'address_components'],
           types: ['address'],
           componentRestrictions: { country: 'us' }
         });
 
-        autocompleteInstance.addListener('place_changed', () => {
-          const place = autocompleteInstance.getPlace();
-          if (place.address_components) {
-            let streetNumber = '';
-            let streetName = '';
-            let city = '';
-            let state = '';
-            let zip = '';
-            let country = '';
-
-            for (const component of place.address_components) {
-              const types = component.types;
-
-              if (types.includes('street_number')) {
-                streetNumber = component.long_name;
-              }
-              if (types.includes('route')) {
-                streetName = component.long_name;
-              }
-              if (types.includes('locality')) {
-                city = component.long_name;
-              }
-              if (types.includes('administrative_area_level_1')) {
-                state = component.short_name;
-              }
-              if (types.includes('postal_code')) {
-                zip = component.long_name;
-              }
-              if (types.includes('country')) {
-                country = component.long_name;
-              }
-            }
-
-            setShippingData(prev => ({
-              ...prev,
-              address: {
-                street: `${streetNumber} ${streetName}`.trim(),
-                city,
-                state,
-                zip,
-                country
-              }
-            }));
-          }
+        // Create marker
+        const marker = new window.google.maps.Marker({
+          map: map,
+          visible: false
         });
 
-        setAutocomplete(autocompleteInstance);
-      }
-    }
-  }, [isLoaded, loadError]);
+        // Add place changed listener
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          
+          if (!place.geometry || !place.geometry.location) {
+            console.log('⚠️ No geometry for selected place');
+            return;
+          }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
+          console.log('✅ Place selected:', place.formatted_address);
+
+          // Parse address
+          const components = place.address_components || [];
+          let street = '', city = '', state = '', zip = '';
+
+          components.forEach(component => {
+            const types = component.types;
+            if (types.includes('street_number')) {
+              street = component.long_name + ' ';
+            } else if (types.includes('route')) {
+              street += component.long_name;
+            } else if (types.includes('locality')) {
+              city = component.long_name;
+            } else if (types.includes('administrative_area_level_1')) {
+              state = component.short_name;
+            } else if (types.includes('postal_code')) {
+              zip = component.long_name;
+            }
+          });
+
+          // Update form
+          setShippingData(prev => ({
+            ...prev,
+            address: {
+              ...prev.address,
+              street: street.trim(),
+              city: city,
+              state: state,
+              zip: zip
+            }
+          }));
+
+          // Update map
+          if (place.geometry.viewport) {
+            map.fitBounds(place.geometry.viewport);
+          } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(17);
+          }
+          
+          marker.setPosition(place.geometry.location);
+          marker.setVisible(true);
+          setSelectedPlace(place);
+        });
+
+        // Store refs
+        mapRef.current = map;
+        autocompleteRef.current = autocomplete;
+        markerRef.current = marker;
+        setMapsReady(true);
+        
+        console.log('✅ Google Maps initialized successfully');
+        
+      } catch (error) {
+        console.log('❌ Error initializing Google Maps:', error.message);
+      }
+    };
+
+    const timer = setTimeout(initializeMap, 100);
+    return () => clearTimeout(timer);
+  }, [showGoogleMaps]);
+
+  // Handle form input changes
+  const handleInputChange = (field, value) => {
+    if (field.includes('.')) {
+      const [parent, child] = field.split('.');
       setShippingData(prev => ({
         ...prev,
         [parent]: {
@@ -126,165 +245,185 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
     } else {
       setShippingData(prev => ({
         ...prev,
-        [name]: value
+        [field]: value
       }));
     }
   };
 
+  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
-
-    // Basic validation
-    if (!shippingData.name || !shippingData.address.street || 
-        !shippingData.address.city || !shippingData.address.state || 
-        !shippingData.address.zip || !shippingData.address.country) {
-      setError('Please fill in all required fields');
+    console.log('📝 Form submitted with data:', shippingData);
+    
+    // Validate required fields
+    const requiredFields = ['name', 'address.street', 'address.city', 'address.state', 'address.zip', 'phone'];
+    const missingFields = requiredFields.filter(field => {
+      if (field.includes('.')) {
+        const [parent, child] = field.split('.');
+        return !shippingData[parent]?.[child]?.trim();
+      }
+      return !shippingData[field]?.trim();
+    });
+    
+    if (missingFields.length > 0) {
+      alert(`Please fill in the following fields: ${missingFields.join(', ')}`);
       return;
     }
 
+    // Update order data and proceed
     updateOrderData({ shippingData });
     onNext();
   };
 
-  const handleAddAnotherProduct = () => {
-    // Save shipping data, then go back to product entry
-    updateOrderData({ shippingData });
-    resetForNewProduct();
-  };
-
-  if (loadError) {
-    return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        Error loading Google Maps API. Please try again later.
-      </Alert>
-    );
-  }
+  console.log('🔍 Rendering form with state:', { showGoogleMaps, mapsReady });
 
   return (
-    <Box className="privacy-container">
+    <div className="privacy-container">
       <Typography variant="h5" className="privacy-title" gutterBottom sx={{ color: 'var(--text-primary)' }}>
         Shipping Information
       </Typography>
+      
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
               label="Full Name"
-              name="name"
               value={shippingData.name}
-              onChange={handleChange}
+              onChange={(e) => handleInputChange('name', e.target.value)}
               required
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
+            
             <TextField
               fullWidth
-              label="Email (optional but used for confirmation and tracking)"
-              name="email"
+              label="Email (optional)"
               value={shippingData.email}
-              onChange={handleChange}
+              onChange={(e) => handleInputChange('email', e.target.value)}
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
+            
             <TextField
               fullWidth
-              label="Phone (optional)"
-              name="phone"
+              label="Phone"
               value={shippingData.phone}
-              onChange={handleChange}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              required
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
-            <Typography variant="h6" className="privacy-subtitle" sx={{ mt: 2, color: 'var(--text-primary)' }}>
-              Shipping Address
+
+            {/* Google Maps Section - Only show if loaded */}
+            {showGoogleMaps && (
+              <>
+                <Typography variant="h6" className="privacy-subtitle" sx={{ mt: 2, mb: 2, color: 'var(--text-primary)' }}>
+                  🗺️ Find Your Address
+                </Typography>
+                
+                <Paper 
+                  elevation={3} 
+                  sx={{ 
+                    mb: 3, 
+                    p: 2, 
+                    backgroundColor: 'rgba(30, 34, 45, 0.8)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 2
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    id="address-autocomplete"
+                    label="Search for your address"
+                    placeholder="Type your address..."
+                    className="privacy-input"
+                    sx={{ 
+                      mb: 2, 
+                      input: { color: 'var(--text-primary) !important' }, 
+                      label: { color: 'var(--text-secondary) !important' } 
+                    }}
+                  />
+                  
+                  <div
+                    ref={mapContainerRef}
+                    style={{
+                      height: '250px',
+                      width: '100%',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      marginBottom: '8px'
+                    }}
+                  />
+                  
+                  {selectedPlace && (
+                    <Alert severity="success" sx={{ mt: 1 }}>
+                      ✓ Address found and filled in the form below!
+                    </Alert>
+                  )}
+                </Paper>
+              </>
+            )}
+
+            <Typography variant="h6" className="privacy-subtitle" sx={{ mt: 2, mb: 2, color: 'var(--text-primary)' }}>
+              {showGoogleMaps ? 'Or Enter Manually' : 'Enter Your Address'}
             </Typography>
-            <TextField
-              fullWidth
-              id="address-search"
-              label="Search Address"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              className="privacy-input"
-              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
-              placeholder="Start typing your address..."
-            />
+            
             <TextField
               fullWidth
               label="Street Address"
-              name="address.street"
               value={shippingData.address.street}
-              onChange={handleChange}
+              onChange={(e) => handleInputChange('address.street', e.target.value)}
               required
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
+            
             <TextField
               fullWidth
               label="City"
-              name="address.city"
               value={shippingData.address.city}
-              onChange={handleChange}
+              onChange={(e) => handleInputChange('address.city', e.target.value)}
               required
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
+            
             <TextField
               fullWidth
-              label="State/Province"
-              name="address.state"
+              label="State"
               value={shippingData.address.state}
-              onChange={handleChange}
+              onChange={(e) => handleInputChange('address.state', e.target.value)}
               required
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
+            
             <TextField
               fullWidth
-              label="ZIP/Postal Code"
-              name="address.zip"
+              label="ZIP Code"
               value={shippingData.address.zip}
-              onChange={handleChange}
+              onChange={(e) => handleInputChange('address.zip', e.target.value)}
               required
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
+            
             <TextField
               fullWidth
               label="Country"
-              name="address.country"
               value={shippingData.address.country}
-              onChange={handleChange}
+              onChange={(e) => handleInputChange('address.country', e.target.value)}
               required
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
-            {error && (
-              <Alert 
-                severity="error" 
-                sx={{ 
-                  mt: 2,
-                  backgroundColor: 'rgba(245, 101, 101, 0.1)',
-                  color: 'var(--error-color)',
-                  border: '1px solid var(--error-color)'
-                }}
-              >
-                {error}
-              </Alert>
-            )}
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
               <Button 
                 variant="outlined" 
                 onClick={onBack}
                 className="privacy-button"
-                sx={{
-                  borderColor: 'var(--border-color)',
-                  '&:hover': {
-                    borderColor: 'var(--accent-color)',
-                    backgroundColor: 'rgba(74, 158, 255, 0.08)'
-                  }
-                }}
               >
                 Back
               </Button>
@@ -292,18 +431,13 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
                 variant="contained" 
                 type="submit"
                 className="privacy-button"
-                sx={{
-                  backgroundColor: 'var(--accent-color)',
-                  '&:hover': {
-                    backgroundColor: 'var(--accent-color-hover)'
-                  }
-                }}
               >
                 Continue
               </Button>
-            </Box>
+            </div>
           </form>
         </Grid>
+        
         <Grid item xs={12} md={6}>
           <Card className="privacy-card fade-in" sx={{
             background: 'rgba(30, 34, 45, 0.55)',
@@ -314,9 +448,6 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
             p: 0,
             overflow: 'visible',
             minHeight: 320,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
           }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" className="privacy-subtitle" gutterBottom sx={{ fontWeight: 700, fontSize: 22, color: 'var(--text-primary)', mb: 2 }}>
@@ -324,34 +455,29 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
               </Typography>
               {products && products.length > 0 ? (
                 products.map((product, idx) => (
-                  <Box
+                  <div
                     key={idx}
-                    className="fade-in"
-                    sx={{
-                      mb: 3,
+                    style={{
+                      marginBottom: '1.5rem',
                       display: 'flex',
                       alignItems: 'center',
-                      bgcolor: 'rgba(255,255,255,0.04)',
-                      borderRadius: 4,
-                      p: 2.5,
-                      boxShadow: '0 2px 8px 0 rgba(16,22,36,0.10)',
-                      transition: 'transform 0.15s',
-                      '&:hover': { transform: 'scale(1.025)', boxShadow: '0 4px 16px 0 rgba(16,22,36,0.16)' },
+                      backgroundColor: 'rgba(255,255,255,0.04)',
+                      borderRadius: '16px',
+                      padding: '20px',
                     }}
                   >
-                    <Box sx={{
-                      minWidth: 84,
-                      maxWidth: 84,
-                      minHeight: 84,
-                      maxHeight: 84,
-                      borderRadius: 3.5,
+                    <div style={{
+                      minWidth: '84px',
+                      maxWidth: '84px',
+                      minHeight: '84px',
+                      maxHeight: '84px',
+                      borderRadius: '14px',
                       overflow: 'hidden',
-                      bgcolor: 'rgba(255,255,255,0.10)',
+                      backgroundColor: 'rgba(255,255,255,0.10)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      mr: 3,
-                      boxShadow: '0 2px 8px 0 rgba(16,22,36,0.10)',
+                      marginRight: '24px',
                     }}>
                       <img
                         src={product.image}
@@ -359,80 +485,58 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
                         style={{
                           width: '100%',
                           height: '100%',
-                          objectFit: 'contain',
-                          borderRadius: 16,
-                          background: 'rgba(255,255,255,0.10)'
+                          objectFit: 'cover',
+                          borderRadius: '10px'
                         }}
                       />
-                    </Box>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          color: 'var(--text-primary)',
-                          fontWeight: 700,
-                          fontSize: 17,
-                          mb: 0.5,
-                          lineHeight: 1.3,
-                          whiteSpace: 'normal',
-                          wordBreak: 'break-word',
-                          letterSpacing: 0.1,
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          fontWeight: 700, 
+                          fontSize: 16, 
+                          color: 'var(--text-primary)', 
+                          lineHeight: 1.3, 
+                          mb: 0.5 
                         }}
                       >
                         {product.title}
                       </Typography>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          color: 'var(--accent-color)',
-                          fontWeight: 800,
-                          fontSize: 22,
-                          mb: 0.5,
-                          letterSpacing: 0.2,
-                          textShadow: '0 1px 8px rgba(255,153,0,0.10)'
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: 'var(--text-secondary)', 
+                          fontSize: 14, 
+                          lineHeight: 1.4, 
+                          mb: 1 
+                        }}
+                      >
+                        {product.description}
+                      </Typography>
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          fontWeight: 700, 
+                          fontSize: 18, 
+                          color: 'var(--accent-color)' 
                         }}
                       >
                         ${product.price}
                       </Typography>
-                    </Box>
-                  </Box>
+                    </div>
+                  </div>
                 ))
               ) : (
-                <Typography sx={{ color: 'var(--text-secondary)' }}>
-                  No products added yet.
+                <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
+                  No products selected
                 </Typography>
               )}
-              <Button
-                variant="outlined"
-                onClick={handleAddAnotherProduct}
-                className="privacy-button"
-                sx={{
-                  mt: 2,
-                  borderRadius: 99,
-                  borderColor: 'var(--accent-color)',
-                  color: 'var(--accent-color)',
-                  fontWeight: 700,
-                  fontSize: 16,
-                  px: 4,
-                  py: 1.5,
-                  background: 'rgba(255,255,255,0.08)',
-                  boxShadow: '0 2px 8px 0 rgba(255,153,0,0.08)',
-                  transition: 'all 0.18s',
-                  '&:hover': {
-                    borderColor: 'var(--accent-color)',
-                    color: '#fff',
-                    background: 'linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-hover) 100%)',
-                    boxShadow: '0 4px 16px 0 rgba(255,153,0,0.16)',
-                  }
-                }}
-              >
-                Add Another Product
-              </Button>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
-    </Box>
+    </div>
   );
 }
 
