@@ -17,7 +17,7 @@ const RecentOrdersCarousel = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await fetch('/api/tracked-urls/recent');
+        const res = await fetch('https://anonzon-sol.onrender.com/api/tracked-urls/recent');
         const data = await res.json();
         if (data.success) {
           setOrders(data.items);
@@ -43,46 +43,54 @@ const RecentOrdersCarousel = () => {
           px: 2,
         }}
         animate={{
-          x: [0, -1000],
+          x: [0, -orders.length * 220],
         }}
         transition={{
           x: {
             repeat: Infinity,
-            repeatType: "loop",
-            duration: 20,
-            ease: "linear",
+            repeatType: 'loop',
+            duration: orders.length * 3,
+            ease: 'linear',
           },
         }}
       >
-        {orders.map((order, index) => {
+        {[...orders, ...orders].map((order, index) => {
           const name = order.name ? order.name.split(' ').slice(0, 4).join(' ') : '';
-          const sol = order.priceUSD ? (order.priceUSD * 155).toFixed(2) : '';
+          const sol = order.priceUSD ? (order.priceUSD / 155).toFixed(2) : '';
           return (
             <Paper
               key={index}
               sx={{
-                p: 2,
+                p: 1,
                 minWidth: 200,
+                maxWidth: 200,
+                minHeight: 100,
+                maxHeight: 100,
                 bgcolor: 'rgba(255,255,255,0.05)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 2
+                gap: 2,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                height: '100%',
+                mt: '7px',
+                mb: '7px',
               }}
             >
-              {order.image && (
-                <img src={order.image} alt="product" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 6, marginRight: 10 }} />
-              )}
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle2" sx={{ color: '#fff', mb: 0.5, fontSize: 16, fontWeight: 600 }}>
-                  {name}
+                  {order.name ? order.name.slice(0, 16) : ''}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(74,158,255,0.95)', fontWeight: 700, fontSize: 15 }}>
                   {sol} SOL &bull; Processing
                 </Typography>
               </Box>
+              {order.image && (
+                <img src={order.image} alt="product" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginLeft: 10 }} />
+              )}
             </Paper>
           );
         })}
