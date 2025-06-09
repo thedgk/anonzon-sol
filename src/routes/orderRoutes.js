@@ -135,13 +135,14 @@ router.get('/tracked-urls/recent', async (req, res) => {
   try {
     const items = await TrackedUrl.find({})
       .sort({ checkedAt: -1 })
-      .limit(10)
-      .lean();
+      .limit(10);
+
     const result = items.map(item => ({
       name: item.productInfo?.title || '',
-      priceUSD: item.priceUSD,
+      priceUSD: item.productInfo?.price || null,
       image: item.productInfo?.image || '',
     }));
+
     res.json({ success: true, items: result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
