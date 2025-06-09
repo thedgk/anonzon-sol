@@ -96,6 +96,8 @@ class ScrapeService {
       const proxyObj = getRandomProxy();
       const proxy = proxyObj;
       const userAgent = getRandomUserAgent(); // User-Agent rotation
+      // Log proxy and user-agent being used
+      console.log(`[Scrape Attempt ${attempt + 1}] Using proxy: ${proxy.proxyString}, User-Agent: ${userAgent}`);
       try {
         const response = await axios.get(url, {
           headers: {
