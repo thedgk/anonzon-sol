@@ -26,8 +26,8 @@ const bgPositions = [
 
 function App() {
   const [activeStep, setActiveStep] = useState(0);
+  const [cartItems, setCartItems] = useState([]);
   const [orderData, setOrderData] = useState({
-    products: [],
     shippingData: null,
     pricing: null
   });
@@ -42,12 +42,21 @@ function App() {
   };
 
   const updateOrderData = (data) => {
-    setOrderData((prev) => {
-      if (data.product) {
-        return { ...prev, products: [...prev.products, data.product] };
-      }
-      return { ...prev, ...data };
-    });
+    setOrderData((prev) => ({ ...prev, ...data }));
+  };
+
+  const handleAddToCart = (product) => {
+    const productExists = cartItems.some(item => 
+      item.title === product.title && 
+      item.price === product.price
+    );
+    if (!productExists) {
+      setCartItems(prev => [...prev, { ...product, quantity: 1 }]);
+    }
+  };
+
+  const handleRemoveFromCart = (indexToRemove) => {
+    setCartItems(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const resetForNewProduct = () => {
@@ -60,7 +69,10 @@ function App() {
         return (
           <ProductVerification
             onNext={handleNext}
-            updateOrderData={updateOrderData}
+            onAddMultiple={() => handleNext()}
+            cartItems={cartItems}
+            onAddToCart={handleAddToCart}
+            onRemoveFromCart={handleRemoveFromCart}
           />
         );
       case 1:
@@ -70,7 +82,7 @@ function App() {
             onBack={handleBack}
             updateOrderData={updateOrderData}
             shippingData={orderData.shippingData}
-            products={orderData.products}
+            products={cartItems}
             resetForNewProduct={resetForNewProduct}
           />
         );
@@ -86,7 +98,7 @@ function App() {
             }}>
               <Payment
                 onBack={handleBack}
-                orderData={orderData}
+                orderData={{ ...orderData, products: cartItems }}
                 hideSendSection={true}
               />
             </Box>

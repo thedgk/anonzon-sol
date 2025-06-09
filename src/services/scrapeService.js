@@ -1,61 +1,14 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const fs = require('fs');
-const path = require('path');
-const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;
+const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY;
 
-// Read proxies from proxies.txt
-const proxiesFilePath = path.join(__dirname, '../proxies.txt');
-const proxies = fs.readFileSync(proxiesFilePath, 'utf-8')
-  .split('\n')
-  .map(line => line.trim())
-  .filter(Boolean);
-
-console.log('Proxies path:', proxiesFilePath);
-console.log('Loaded proxies:', proxies.length);
-
-// Blacklist cache for failed proxies
-const blacklistedProxies = new Set();
-
-// User-Agent rotation list
-const userAgents = [
-  // Chrome Win
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  // Chrome Mac
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Chrome/124.0.0.0 Safari/605.1.15',
-  // Firefox Win
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0',
-  // Firefox Mac
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:125.0) Gecko/20100101 Firefox/125.0',
-  // Edge Win
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0',
-  // Safari Mac
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15',
-  // Chrome Linux
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-  // Mobile Chrome
-  'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
-  // Mobile Safari
-  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1'
-];
-
-function getRandomUserAgent() {
-  const idx = Math.floor(Math.random() * userAgents.length);
-  return userAgents[idx];
-}
-
-function getRandomProxy() {
-  // Only choose from non-blacklisted proxies
-  const availableProxies = proxies.filter(p => !blacklistedProxies.has(p));
-  // If all proxies are blacklisted, clear blacklist and try again
-  if (availableProxies.length === 0) {
-    blacklistedProxies.clear();
-    availableProxies.push(...proxies);
-  }
-  const idx = Math.floor(Math.random() * availableProxies.length);
-  const [host, port, username, password] = availableProxies[idx].split(':');
-  return { host, port, auth: { username, password }, proxyString: availableProxies[idx] };
-}
+// Debug logging for environment variables
+console.log('\n=== SCRAPER INITIALIZATION ===');
+console.log('ScraperAPI Key exists:', !!SCRAPER_API_KEY);
+console.log('ScraperAPI Key length:', SCRAPER_API_KEY ? SCRAPER_API_KEY.length : 0);
+console.log('Node version:', process.version);
+console.log('Current working directory:', process.cwd());
+console.log('================================\n');
 
 // Map common currency symbols to ISO codes
 const currencySymbolMap = {
@@ -93,126 +46,212 @@ const currencySymbolMap = {
 
 class ScrapeService {
   async scrapeProduct(url) {
-    let lastError;
-    const maxAttempts = proxies.length;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const proxyObj = getRandomProxy();
-      const proxy = proxyObj;
-      const userAgent = getRandomUserAgent(); // User-Agent rotation
-      // Log proxy and user-agent being used
-      console.log(`[Scrape Attempt ${attempt + 1}] Using proxy: ${proxy.proxyString}, User-Agent: ${userAgent}`);
-      try {
-        const response = await axios.get(url, {
-          headers: {
-            'User-Agent': userAgent, // Rotating User-Agent
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'DNT': '1',
-            'Referer': url
-          },
-          proxy: {
-            host: proxy.host,
-            port: parseInt(proxy.port, 10),
-            auth: proxy.auth
-          },
-          timeout: 15000
-        });
-        const $ = cheerio.load(response.data);
-        
-        if (url.includes('amazon')) {
-          return await this.scrapeAmazon($, url);
-        } else if (url.includes('shopify')) {
-          return await this.scrapeShopify($);
-        } else {
-          throw new Error('Unsupported store platform');
-        }
-      } catch (error) {
-        console.error('Scraping error:', error, error.stack);
-        // Blacklist this proxy for the rest of this scrape
-        blacklistedProxies.add(proxy.proxyString);
-        continue;
-      }
+    console.log('\n=== SCRAPING REQUEST START ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Target URL:', url);
+    console.log('Request ID:', Math.random().toString(36).substring(7));
+
+    if (!SCRAPER_API_KEY) {
+      console.error('❌ SCRAPER_API_KEY is not set in environment variables');
+      throw new Error('SCRAPER_API_KEY is not set in environment variables');
     }
-    console.error('Scraping error:', lastError);
-    throw new Error('Failed to scrape product information after trying all proxies');
+
+    try {
+      // Step 1: URL Construction
+      console.log('\n1️⃣ CONSTRUCTING SCRAPERAPI URL');
+      const scraperApiUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=${encodeURIComponent(url)}&country_code=us&premium=true&fast=true&keep_headers=true`;
+      console.log('Base URL:', 'http://api.scraperapi.com');
+      console.log('Parameters:', {
+        api_key: '***' + SCRAPER_API_KEY.slice(-4),
+        url: url,
+        country_code: 'us',
+        premium: true,
+        fast: true,
+        keep_headers: true
+      });
+      
+      // Step 2: Request Configuration
+      console.log('\n2️⃣ CONFIGURING REQUEST');
+      const requestConfig = {
+        timeout: 15000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
+        maxRedirects: 3
+      };
+      console.log('Request config:', {
+        timeout: requestConfig.timeout,
+        maxRedirects: requestConfig.maxRedirects,
+        headers: requestConfig.headers
+      });
+
+      // Step 3: Making Request
+      console.log('\n3️⃣ MAKING REQUEST TO SCRAPERAPI');
+      console.log('Start time:', new Date().toISOString());
+      const startTime = Date.now();
+      
+      const response = await axios.get(scraperApiUrl, requestConfig);
+      
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      // Step 4: Response Processing
+      console.log('\n4️⃣ PROCESSING RESPONSE');
+      console.log('End time:', new Date().toISOString());
+      console.log('Duration:', duration, 'ms');
+      console.log('Status:', response.status);
+      console.log('Status text:', response.statusText);
+      console.log('Response headers:', response.headers);
+      console.log('Response size:', response.data.length, 'bytes');
+      console.log('First 100 chars of response:', response.data.substring(0, 100));
+
+      // Step 5: HTML Parsing
+      console.log('\n5️⃣ PARSING HTML');
+      const $ = cheerio.load(response.data);
+      console.log('HTML loaded successfully');
+      
+      // Step 6: Product Processing
+      console.log('\n6️⃣ PROCESSING PRODUCT');
+      let result;
+      if (url.includes('amazon')) {
+        console.log('Processing Amazon product...');
+        result = await this.scrapeAmazon($, url);
+      } else if (url.includes('shopify')) {
+        console.log('Processing Shopify product...');
+        result = await this.scrapeShopify($);
+      } else {
+        console.error('❌ Unsupported store platform');
+        throw new Error('Unsupported store platform');
+      }
+      
+      console.log('\n=== SCRAPING REQUEST COMPLETE ===');
+      console.log('Final result:', result);
+      console.log('Total duration:', duration, 'ms');
+      console.log('================================\n');
+      
+      return result;
+
+    } catch (error) {
+      console.error('\n❌ SCRAPING ERROR OCCURRED');
+      console.error('Error type:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error code:', error.code);
+      console.error('Error stack:', error.stack);
+      
+      if (error.response) {
+        console.error('\nResponse details:');
+        console.error('Status:', error.response.status);
+        console.error('Status text:', error.response.statusText);
+        console.error('Headers:', error.response.headers);
+        console.error('Response data:', error.response.data);
+      } else if (error.request) {
+        console.error('\nRequest details:');
+        console.error('Request made but no response received');
+        console.error('Request config:', error.config);
+      } else {
+        console.error('\nError details:');
+        console.error('Error occurred while setting up request');
+        console.error('Error config:', error.config);
+      }
+      
+      if (error.code === 'ECONNABORTED') {
+        console.error('\n⏰ TIMEOUT ANALYSIS');
+        console.error('Request timed out after 15 seconds');
+        console.error('Possible causes:');
+        console.error('1. ScraperAPI service issues');
+        console.error('2. Network connectivity problems');
+        console.error('3. ScraperAPI rate limiting');
+        console.error('4. Target site blocking the request');
+      }
+      
+      console.error('\n=== SCRAPING REQUEST FAILED ===');
+      console.error('Timestamp:', new Date().toISOString());
+      console.error('================================\n');
+      
+      throw new Error('Failed to scrape product information');
+    }
   }
 
   async scrapeAmazon($, url) {
     const title = $('#productTitle').text().trim();
 
-    // Try to extract price using Amazon's price structure
-    let priceWhole = $('.a-price .a-price-whole').first().text().replace(/[^0-9]/g, '');
-    let priceFraction = $('.a-price .a-price-fraction').first().text().replace(/[^0-9]/g, '');
-    let priceSymbol = $('.a-price .a-price-symbol').first().text().trim();
+    // Primary price selectors in order of reliability
+    const priceSelectors = [
+      '#corePrice_feature_div .a-price .a-offscreen',  // Most reliable main price
+      '#corePrice_feature_div .a-price[data-a-color="price"] .a-offscreen', // Backup main price
+      '#priceblock_ourprice', // Legacy selector
+      '#price_inside_buybox', // Buy box price
+      '.a-price[data-a-color="price"] .a-offscreen' // Generic price
+    ];
 
     let priceText = '';
-    if (priceWhole) {
-      priceText = priceWhole;
-      if (priceFraction) {
-        priceText += '.' + priceFraction;
-      } else {
-        priceText += '.00';
+    let priceElement = null;
+
+    // Try each selector until we find a price
+    for (const selector of priceSelectors) {
+      priceElement = $(selector).first();
+      if (priceElement.length) {
+        priceText = priceElement.text().trim();
+        console.log(`Found price with selector "${selector}":`, priceText);
+        break;
       }
     }
 
-    // Fallback to previous logic if not found
-    if (!priceText || isNaN(parseFloat(priceText))) {
-      const priceSelectors = [
-        '.a-price .a-offscreen',
-        '#priceblock_ourprice',
-        '#priceblock_dealprice',
-        '.a-price-whole',
-        '.a-price .a-offscreen',
-        '.a-price[data-a-color="price"] .a-offscreen'
-      ];
-      for (const selector of priceSelectors) {
-        const priceElement = $(selector).first();
-        if (priceElement.length) {
-          priceText = priceElement.text().replace(/[^0-9.,]/g, '');
-          break;
-        }
-      }
+    // If no price found, log error
+    if (!priceText) {
+      console.error('No price found with any selector');
+      throw new Error('Could not find product price');
     }
 
-    // Use a-price-symbol for currency if available
-    let detectedCurrency = priceSymbol || this.detectCurrency(priceText, $, url);
-    // Map symbol to ISO code if possible
-    if (detectedCurrency && detectedCurrency.length === 1) {
-      detectedCurrency = currencySymbolMap[detectedCurrency] || detectedCurrency;
+    // Extract currency symbol and clean price text
+    const currencyMatch = priceText.match(/^[^\d]*/);
+    const priceSymbol = currencyMatch ? currencyMatch[0].trim() : '$';
+    
+    // Clean price text and convert to number
+    const cleanPrice = priceText.replace(/[^0-9.,]/g, '').replace(',', '.');
+    const price = parseFloat(cleanPrice);
+
+    if (isNaN(price)) {
+      console.error('Invalid price format:', priceText);
+      throw new Error('Invalid price format');
     }
 
-    const price = parseFloat(priceText.replace(',', '.'));
+    // Detect currency
+    const detectedCurrency = this.detectCurrency(priceText, $, url);
     let priceUSD = price;
-    let currency = detectedCurrency;
-
-    // Debug logging
-    console.log('Amazon scrape:', { price, detectedCurrency });
-
-    if (currency && currency !== 'USD' && price > 0) {
+    
+    // Convert to USD if necessary
+    if (detectedCurrency && detectedCurrency !== 'USD' && price > 0) {
       try {
-        priceUSD = await this.convertToUSD(price, currency);
-        console.log(`Converted ${price} ${currency} to ${priceUSD} USD`);
-        currency = 'USD';
+        priceUSD = await this.convertToUSD(price, detectedCurrency);
+        console.log(`Converted ${price} ${detectedCurrency} to ${priceUSD} USD`);
       } catch (err) {
         console.error('Currency conversion failed:', err);
+        // Fall back to original price if conversion fails
+        priceUSD = price;
       }
     }
 
     // Round USD price to 2 decimal places
     priceUSD = Math.round((priceUSD + Number.EPSILON) * 100) / 100;
 
-    const image = $('#landingImage').attr('src') || $('#imgBlkFront').attr('src');
+    // Get the main product image
+    const image = $('#landingImage').attr('src') || 
+                 $('#imgBlkFront').attr('src') || 
+                 $('.a-dynamic-image').first().attr('src');
 
-    return {
+    if (!image) {
+      console.error('No product image found');
+    }
+
+    const result = {
       title,
       price: priceUSD,
       image,
@@ -220,6 +259,9 @@ class ScrapeService {
       originalPrice: price,
       originalCurrency: detectedCurrency
     };
+
+    console.log('Scraped product data:', result);
+    return result;
   }
 
   async scrapeShopify($) {
