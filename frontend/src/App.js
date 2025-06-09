@@ -10,11 +10,19 @@ import Navbar from './components/Navbar';
 import RevShare from './components/RevShare';
 import Socials from './components/Socials';
 import HowItWorks from './components/HowItWorks';
+import backgroundImg from './components/Background.webp';
 
 const steps = ['Product Verification', 'Shipping Information', 'Payment'];
 
 const MotionPaper = motion(Paper);
 const MotionBox = motion(Box);
+
+const bgPositions = [
+  { top: '1%', left: '2%', rotate: 12 },
+  { top: '60%', left: '10%', rotate: 44 },
+  { top: '6%', left: '65%', rotate: 88 },
+  { top: '60%', left: '55%', rotate: 120 },
+];
 
 function App() {
   const [activeStep, setActiveStep] = useState(0);
@@ -82,44 +90,6 @@ function App() {
                 hideSendSection={true}
               />
             </Box>
-            {/* Payment Instructions and Loader */}
-            <Box
-              sx={{
-                mt: 4,
-                p: { xs: 2, md: 4 },
-                borderRadius: 4,
-                background: 'rgba(30, 34, 45, 0.55)',
-                backdropFilter: 'blur(18px)',
-                border: '1.5px solid rgba(255,255,255,0.13)',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
-                textAlign: 'center',
-                maxWidth: 600,
-                mx: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2
-              }}
-            >
-              <Box sx={{ fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', mb: 1 }}>
-                Send <span style={{ color: 'var(--accent-color)' }}>{/* SOL amount will be shown here by Payment */}</span> SOL to address
-              </Box>
-              <Box sx={{ fontFamily: 'monospace', fontSize: 16, color: 'var(--accent-color)', mb: 2, wordBreak: 'break-all' }}>
-                1AjXdhPauJ3dYJsKbLTrr15qVJauCRawtw8dXLRT25d
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
-                <Box className="loader" sx={{ width: 32, height: 32, border: '4px solid #fff2', borderTop: '4px solid var(--accent-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <Box sx={{ fontWeight: 600, fontSize: 18, color: 'var(--text-secondary)' }}>
-                  Waiting for payment...
-                </Box>
-              </Box>
-            </Box>
-            <style>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
           </Box>
         );
       default:
@@ -147,6 +117,26 @@ function App() {
           }
         }}
       >
+        {/* 4 fixed background images */}
+        {bgPositions.map((pos, idx) => (
+          <img
+            key={idx}
+            src={backgroundImg}
+            alt="bg"
+            style={{
+              position: 'absolute',
+              top: pos.top,
+              left: pos.left,
+              width: 512,
+              height: 512,
+              opacity: 0.12,
+              zIndex: 0,
+              pointerEvents: 'none',
+              transform: `rotate(${pos.rotate}deg)`,
+              filter: 'blur(0.5px)',
+            }}
+          />
+        ))}
         <Routes>
           <Route path="/" element={
             <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>

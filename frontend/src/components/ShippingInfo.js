@@ -256,7 +256,7 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
     console.log('📝 Form submitted with data:', shippingData);
     
     // Validate required fields
-    const requiredFields = ['name', 'address.street', 'address.city', 'address.state', 'address.zip', 'phone'];
+    const requiredFields = ['name', 'address.street', 'address.city', 'address.state', 'address.zip'];
     const missingFields = requiredFields.filter(field => {
       if (field.includes('.')) {
         const [parent, child] = field.split('.');
@@ -288,33 +288,13 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
-              label="Full Name"
+              label="Full name or pseudonym"
               value={shippingData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               required
               className="privacy-input"
               sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
             />
-            
-            <TextField
-              fullWidth
-              label="Email (optional)"
-              value={shippingData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className="privacy-input"
-              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
-            />
-            
-            <TextField
-              fullWidth
-              label="Phone"
-              value={shippingData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              required
-              className="privacy-input"
-              sx={{ mb: 2, input: { color: 'var(--text-primary) !important' }, label: { color: 'var(--text-secondary) !important' } }}
-            />
-
             {/* Google Maps Section - Only show if loaded */}
             {showGoogleMaps && (
               <>
@@ -532,6 +512,13 @@ function ShippingInfo({ onNext, onBack, updateOrderData, shippingData: initialSh
                   No products selected
                 </Typography>
               )}
+              <Button
+                variant="outlined"
+                onClick={resetForNewProduct}
+                sx={{ mt: 2, borderRadius: 99, borderColor: 'var(--border-color)', color: 'var(--text-secondary)', '&:hover': { borderColor: 'var(--accent-color)', color: 'var(--accent-color)', backgroundColor: 'rgba(74, 158, 255, 0.08)' } }}
+              >
+                Add Another Product
+              </Button>
             </CardContent>
           </Card>
         </Grid>

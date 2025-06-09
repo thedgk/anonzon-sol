@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import Navbar from './components/Navbar';
 import { Box, Button, Typography, Container, Grid, useTheme, Paper } from '@mui/material';
 import { motion } from 'framer-motion';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
+import backgroundImg from './components/Background.webp';
 
 // Styled components
 const AnimatedBox = motion(Box);
@@ -11,13 +13,22 @@ const AnimatedGrid = motion(Grid);
 
 // Recent Orders Carousel
 const RecentOrdersCarousel = () => {
-  const sampleOrders = [
-    { id: 1, product: "iPhone 15 Pro", amount: "2.5 SOL", status: "Delivered" },
-    { id: 2, product: "MacBook Air M4", amount: "5.2 SOL", status: "Processing" },
-    { id: 3, product: "AirPods Pro", amount: "1.8 SOL", status: "Shipped" },
-    { id: 4, product: "iPad Pro", amount: "3.7 SOL", status: "Processing" },
-    { id: 5, product: "Apple Watch", amount: "2.1 SOL", status: "Delivered" },
-  ];
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('https://anonzon-sol.onrender.com/api/tracked-urls/recent');
+        const data = await res.json();
+        if (data.success) {
+          setOrders(data.items);
+        }
+      } catch (err) {
+        setOrders([]);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   return (
     <Box sx={{ 
@@ -33,37 +44,57 @@ const RecentOrdersCarousel = () => {
           px: 2,
         }}
         animate={{
-          x: [0, -1000],
+          x: [0, -orders.length * 220],
         }}
         transition={{
           x: {
             repeat: Infinity,
-            repeatType: "loop",
-            duration: 20,
-            ease: "linear",
+            repeatType: 'loop',
+            duration: orders.length * 3,
+            ease: 'linear',
           },
         }}
       >
-        {[...sampleOrders, ...sampleOrders].map((order, index) => (
-          <Paper
-            key={`${order.id}-${index}`}
-            sx={{
-              p: 2,
-              minWidth: 200,
-              bgcolor: 'rgba(255,255,255,0.05)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '12px',
-            }}
-          >
-            <Typography variant="subtitle2" sx={{ color: '#fff', mb: 1 }}>
-              {order.product}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              {order.amount} • {order.status}
-            </Typography>
-          </Paper>
-        ))}
+        {[...orders, ...orders].map((order, index) => {
+          const name = order.name ? order.name.split(' ').slice(0, 4).join(' ') : '';
+          const sol = order.priceUSD ? (order.priceUSD / 155).toFixed(2) : '';
+          return (
+            <Paper
+              key={index}
+              sx={{
+                p: 1,
+                minWidth: 200,
+                maxWidth: 200,
+                minHeight: 100,
+                maxHeight: 100,
+                bgcolor: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                height: '100%',
+                mt: '7px',
+                mb: '7px',
+              }}
+            >
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: '#fff', mb: 0.5, fontSize: 16, fontWeight: 600 }}>
+                  {order.name ? order.name.slice(0, 16) : ''}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(74,158,255,0.95)', fontWeight: 700, fontSize: 15 }}>
+                  {sol} SOL &bull; Processing
+                </Typography>
+              </Box>
+              {order.image && (
+                <img src={order.image} alt="product" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginLeft: 10 }} />
+              )}
+            </Paper>
+          );
+        })}
       </AnimatedBox>
     </Box>
   );
@@ -105,6 +136,24 @@ const ProcessStep = ({ number, title, description, delay }) => (
   </AnimatedGrid>
 );
 
+const getRandomPositions = () => {
+  return Array.from({ length: 8 }).map(() => ({
+    top: Math.random() * 88 + '%', // 0% to 88% (so 512px fits in 100vh)
+    left: Math.random() * 88 + '%', // 0% to 88% (so 512px fits in 100vw)
+    rotate: Math.random() * 360,
+  }));
+};
+
+// Use 6 fixed positions for background images
+const bgPositions = [
+  { top: '8%', left: '6%', rotate: 12 },
+  { top: '60%', left: '10%', rotate: 44 },
+  { top: '20%', left: '70%', rotate: 88 },
+  { top: '65%', left: '65%', rotate: 120 },
+  { top: '40%', left: '40%', rotate: 200 },
+  { top: '75%', left: '92%', rotate: 300 },
+];
+
 const LandingPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -122,272 +171,183 @@ const LandingPage = () => {
     <Box sx={{ 
       minHeight: '100vh', 
       bgcolor: 'var(--primary-bg)',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      position: 'relative',
     }}>
-      {/* Recent Orders Carousel */}
-      <RecentOrdersCarousel />
-
-      {/* Hero Section */}
-      <AnimatedBox
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        sx={{ 
-          position: 'relative',
-          pt: { xs: 8, md: 12 },
-          pb: { xs: 8, md: 12 },
-          '&::before': {
-            content: '""',
+      {/* Render 6 fixed background images */}
+      {bgPositions.map((pos, idx) => (
+        <img
+          key={idx}
+          src={backgroundImg}
+          alt="bg"
+          style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 60%)',
-            zIndex: 0
-          }
-        }}
-      >
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={7}>
-              <AnimatedTypography 
-                variant="h1" 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                sx={{
-                  fontSize: { xs: '2.5rem', md: '4rem' },
-                  fontWeight: 800,
-                  background: 'linear-gradient(45deg, #fff 30%, #a8a8a8 90%)',
-                  backgroundClip: 'text',
-                  textFillColor: 'transparent',
-                  mb: 3,
-                  lineHeight: 1.2
-                }}
-              >
-                Shopping, Anonymous
-              </AnimatedTypography>
-              
-              <AnimatedTypography 
-                variant="h5" 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                sx={{ 
-                  mb: 4, 
-                  lineHeight: 1.6,
-                  color: 'rgba(255,255,255,0.9)',
-                  fontSize: { xs: '1.1rem', md: '1.25rem' }
-                }}
-              >
-                The future of shopping is here. Buy anything from Amazon or Shopify using crypto — 
-                no KYC, no accounts, fully anonymous.
-              </AnimatedTypography>
+            top: pos.top,
+            left: pos.left,
+            width: 512,
+            height: 512,
+            opacity: 0.12,
+            zIndex: 0,
+            pointerEvents: 'none',
+            transform: `rotate(${pos.rotate}deg)`,
+            filter: 'blur(0.5px)',
+          }}
+        />
+      ))}
+      <Box sx={{ position: 'relative', zIndex: 1 }}>
+        <Navbar />
+        <Box sx={{ mt: { xs: 7, md: 8 }, mb: '10px' }}>
+          <RecentOrdersCarousel />
+        </Box>
 
-              <AnimatedBox 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-                sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}
-              >
-                <Button 
-                  variant="contained" 
-                  size="large"
-                  onClick={handleGetStarted}
-                  sx={{
-                    bgcolor: '#fff',
-                    color: '#000',
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: '8px',
-                    '&:hover': {
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                    }
-                  }}
-                >
-                  Get Started
-                </Button>
-                <Button 
-                  variant="outlined" 
-                  size="large"
-                  onClick={handleBuyToken}
-                  sx={{
-                    borderColor: 'rgba(255,255,255,0.3)',
-                    color: '#fff',
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: '8px',
-                    '&:hover': {
-                      borderColor: '#fff',
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                    }
-                  }}
-                >
-                  Buy Token
-                </Button>
-              </AnimatedBox>
-            </Grid>
-            
-            <Grid item xs={12} md={5}>
-              <AnimatedBox
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                sx={{
-                  position: 'relative',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: -20,
-                    left: -20,
-                    right: -20,
-                    bottom: -20,
-                    background: 'radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%)',
-                    borderRadius: '24px',
-                    zIndex: -1
-                  }
-                }}
-              >
-                <Box sx={{
-                  width: '100%',
-                  height: 400,
-                  bgcolor: 'rgba(255,255,255,0.05)',
-                  borderRadius: '16px',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.1)'
-                }} />
-              </AnimatedBox>
-            </Grid>
-          </Grid>
-        </Container>
-      </AnimatedBox>
-
-      {/* Process Flow Section */}
-      <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: 'rgba(0,0,0,0.2)' }}>
-        <Container maxWidth="lg">
-          <AnimatedTypography
-            variant="h2"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
+        {/* Hero Section */}
+        <Container maxWidth="md" sx={{ pb: 8, textAlign: 'center' }}>
+          <Typography variant="h2" sx={{ fontWeight: 900, mb: 2, fontSize: { xs: 36, md: 56 }, letterSpacing: -1, color: 'var(--text-primary)' }}>
+            The Anonymous Shopping Experience
+          </Typography>
+          <Typography variant="h5" sx={{ color: 'var(--text-secondary)', mb: 4, fontWeight: 400, maxWidth: 600, mx: 'auto' }}>
+            Buy anything online, pay with crypto, and keep your privacy. No accounts. No tracking. Just paste a link and relax.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
             sx={{
-              textAlign: 'center',
-              mb: 6,
+              borderRadius: 3,
+              px: 5,
+              py: 1.7,
+              fontWeight: 800,
+              fontSize: 20,
+              background: 'linear-gradient(90deg, #FFB366 0%, #FF8C42 100%)',
               color: '#fff',
-              fontWeight: 700
+              boxShadow: '0 6px 32px 0 rgba(255,140,66,0.13)',
+              textTransform: 'none',
+              letterSpacing: 0.5
             }}
+            onClick={handleGetStarted}
           >
-            How It Works
-          </AnimatedTypography>
-          <Grid container spacing={4}>
-            <ProcessStep
-              number="1"
-              title="Paste Product Link"
-              description="Simply paste the Amazon or Shopify product link you want to purchase."
-              delay={0.2}
-            />
-            <ProcessStep
-              number="2"
-              title="Enter Delivery Details"
-              description="Provide your delivery address and any special instructions."
-              delay={0.4}
-            />
-            <ProcessStep
-              number="3"
-              title="Pay with SOL"
-              description="Complete your purchase using Solana cryptocurrency."
-              delay={0.6}
-            />
-            <ProcessStep
-              number="4"
-              title="Track Your Order"
-              description="Monitor your order status and receive updates through your wallet."
-              delay={0.8}
-            />
+            Start Your First Order
+          </Button>
+        </Container>
+
+        {/* Feature Highlights */}
+        <Container maxWidth="md" sx={{ mb: 10 }}>
+          <Grid container spacing={4} justifyContent="center" alignItems="stretch">
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', textAlign: 'center', boxShadow: 'none', minHeight: 180 }}>
+                <Box sx={{ fontSize: 40, mb: 1 }}>⚡️</Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'var(--accent-color)' }}>Lightning Fast</Typography>
+                <Typography variant="body1" sx={{ color: 'var(--text-secondary)' }}>Order in seconds. We handle the rest, fast.</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', textAlign: 'center', boxShadow: 'none', minHeight: 180 }}>
+                <Box sx={{ fontSize: 40, mb: 1 }}>🔒</Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'var(--accent-color)' }}>Truly Private</Typography>
+                <Typography variant="body1" sx={{ color: 'var(--text-secondary)' }}>No KYC. No accounts. No data sold. Ever.</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', textAlign: 'center', boxShadow: 'none', minHeight: 180 }}>
+                <Box sx={{ fontSize: 40, mb: 1 }}>★</Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'var(--accent-color)' }}>Loved by Users</Typography>
+                <Typography variant="body1" sx={{ color: 'var(--text-secondary)' }}>Hundreds of happy, privacy-first shoppers.</Typography>
+              </Paper>
+            </Grid>
           </Grid>
         </Container>
-      </Box>
 
-      {/* Features Section */}
-      <Box sx={{ py: { xs: 8, md: 12 } }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            <AnimatedGrid
-              item
-              xs={12}
-              md={3}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ color: '#fff', mb: 2, fontWeight: 600 }}>
-                  Simple Process
-                </Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-                  Paste a product link, enter delivery details, and pay in SOL. That's it.
-                </Typography>
-              </Box>
-            </AnimatedGrid>
-            <AnimatedGrid
-              item
-              xs={12}
-              md={3}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              viewport={{ once: true }}
-            >
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ color: '#fff', mb: 2, fontWeight: 600 }}>
-                  Fully Anonymous
-                </Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-                  No KYC, no accounts needed. Your privacy is our priority.
-                </Typography>
-              </Box>
-            </AnimatedGrid>
-            <AnimatedGrid
-              item
-              xs={12}
-              md={3}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ color: '#fff', mb: 2, fontWeight: 600 }}>
-                  Global Access
-                </Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-                  Shop from anywhere in the world with just your crypto wallet.
-                </Typography>
-              </Box>
-            </AnimatedGrid>
-            <AnimatedGrid
-              item
-              xs={12}
-              md={3}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-              viewport={{ once: true }}
-            >
-              <Box sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ color: '#fff', mb: 2, fontWeight: 600 }}>
-                  Secure Delivery
-        </Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-                  Discreet packaging and secure shipping to protect your privacy.
-        </Typography>
-              </Box>
-            </AnimatedGrid>
+        {/* How It Works */}
+        <Container maxWidth="md" sx={{ mb: 10 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, mb: 5, textAlign: 'center', color: 'var(--text-primary)' }}>
+            How It Works
+          </Typography>
+          <Grid container spacing={4} justifyContent="center" alignItems="stretch">
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', textAlign: 'center', boxShadow: 'none', minHeight: 140 }}>
+                <Box sx={{ fontSize: 32, mb: 1 }}>🛒</Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'var(--accent-color)' }}>Paste Link</Typography>
+                <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>Paste any product link.</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', textAlign: 'center', boxShadow: 'none', minHeight: 140 }}>
+                <Box sx={{ fontSize: 32, mb: 1 }}>📍</Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'var(--accent-color)' }}>Enter Address</Typography>
+                <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>Just your delivery address.</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', textAlign: 'center', boxShadow: 'none', minHeight: 140 }}>
+                <Box sx={{ fontSize: 32, mb: 1 }}>💸</Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'var(--accent-color)' }}>Pay with Crypto</Typography>
+                <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>We handle the rest.</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', textAlign: 'center', boxShadow: 'none', minHeight: 140 }}>
+                <Box sx={{ fontSize: 32, mb: 1 }}>🚚</Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'var(--accent-color)' }}>Track & Receive</Typography>
+                <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>Get updates, stay private.</Typography>
+              </Paper>
+            </Grid>
           </Grid>
-      </Container>
+        </Container>
+
+        {/* Social Proof / Testimonials */}
+        <Container maxWidth="md" sx={{ mb: 10 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, mb: 5, textAlign: 'center', color: 'var(--text-primary)' }}>
+            Loved by Privacy-First Shoppers
+          </Typography>
+          <Grid container spacing={4} justifyContent="center">
+            <Grid item xs={12} md={6}>
+              <Paper elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', boxShadow: 'none' }}>
+                <Typography variant="body1" sx={{ color: 'var(--text-secondary)', mb: 2 }}>
+                  "I never thought shopping online could be this private and easy. Anonzon is a game changer."
+                </Typography>
+                <Typography variant="subtitle2" sx={{ color: 'var(--accent-color)', fontWeight: 700 }}>@anonshopper</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Paper elevation={0} sx={{ p: 4, borderRadius: 3, bgcolor: 'rgba(30,34,45,0.55)', backdropFilter: 'blur(18px)', border: '1.5px solid rgba(255,255,255,0.13)', boxShadow: 'none' }}>
+                <Typography variant="body1" sx={{ color: 'var(--text-secondary)', mb: 2 }}>
+                  "No KYC, no accounts, just pure privacy. I recommend Anonzon to everyone."
+                </Typography>
+                <Typography variant="subtitle2" sx={{ color: 'var(--accent-color)', fontWeight: 700 }}>@cryptofriend</Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
+
+        {/* Final CTA */}
+        <Container maxWidth="md" sx={{ textAlign: 'center', mb: 8 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, mb: 3, color: 'var(--text-primary)' }}>
+            Ready to try private shopping?
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            sx={{
+              borderRadius: 3,
+              px: 5,
+              py: 1.7,
+              fontWeight: 800,
+              fontSize: 20,
+              background: 'linear-gradient(90deg, #FFB366 0%, #FF8C42 100%)',
+              color: '#fff',
+              boxShadow: '0 6px 32px 0 rgba(255,140,66,0.13)',
+              textTransform: 'none',
+              letterSpacing: 0.5
+            }}
+            onClick={handleGetStarted}
+          >
+            Start Your First Order
+          </Button>
+        </Container>
+
+        {/* Footer */}
+        <Box sx={{ py: 4, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 15, opacity: 0.7 }}>
+          © {new Date().getFullYear()} Anonzon. Privacy-first shopping.
+        </Box>
       </Box>
     </Box>
   );

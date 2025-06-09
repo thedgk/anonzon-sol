@@ -1,6 +1,61 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const fs = require('fs');
+const path = require('path');
 const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;
+
+// Read proxies from proxies.txt
+const proxiesFilePath = path.join(__dirname, '../proxies.txt');
+const proxies = fs.readFileSync(proxiesFilePath, 'utf-8')
+  .split('\n')
+  .map(line => line.trim())
+  .filter(Boolean);
+
+console.log('Proxies path:', proxiesFilePath);
+console.log('Loaded proxies:', proxies.length);
+
+// Blacklist cache for failed proxies
+const blacklistedProxies = new Set();
+
+// User-Agent rotation list
+const userAgents = [
+  // Chrome Win
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  // Chrome Mac
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Chrome/124.0.0.0 Safari/605.1.15',
+  // Firefox Win
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0',
+  // Firefox Mac
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:125.0) Gecko/20100101 Firefox/125.0',
+  // Edge Win
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0',
+  // Safari Mac
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_4_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Safari/605.1.15',
+  // Chrome Linux
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  // Mobile Chrome
+  'Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+  // Mobile Safari
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1'
+];
+
+function getRandomUserAgent() {
+  const idx = Math.floor(Math.random() * userAgents.length);
+  return userAgents[idx];
+}
+
+function getRandomProxy() {
+  // Only choose from non-blacklisted proxies
+  const availableProxies = proxies.filter(p => !blacklistedProxies.has(p));
+  // If all proxies are blacklisted, clear blacklist and try again
+  if (availableProxies.length === 0) {
+    blacklistedProxies.clear();
+    availableProxies.push(...proxies);
+  }
+  const idx = Math.floor(Math.random() * availableProxies.length);
+  const [host, port, username, password] = availableProxies[idx].split(':');
+  return { host, port, auth: { username, password }, proxyString: availableProxies[idx] };
+}
 
 // Map common currency symbols to ISO codes
 const currencySymbolMap = {
@@ -38,26 +93,57 @@ const currencySymbolMap = {
 
 class ScrapeService {
   async scrapeProduct(url) {
-    try {
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    let lastError;
+    const maxAttempts = proxies.length;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const proxyObj = getRandomProxy();
+      const proxy = proxyObj;
+      const userAgent = getRandomUserAgent(); // User-Agent rotation
+      // Log proxy and user-agent being used
+      console.log(`[Scrape Attempt ${attempt + 1}] Using proxy: ${proxy.proxyString}, User-Agent: ${userAgent}`);
+      try {
+        const response = await axios.get(url, {
+          headers: {
+            'User-Agent': userAgent, // Rotating User-Agent
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'DNT': '1',
+            'Referer': url
+          },
+          proxy: {
+            host: proxy.host,
+            port: parseInt(proxy.port, 10),
+            auth: proxy.auth
+          },
+          timeout: 15000
+        });
+        const $ = cheerio.load(response.data);
+        
+        if (url.includes('amazon')) {
+          return await this.scrapeAmazon($, url);
+        } else if (url.includes('shopify')) {
+          return await this.scrapeShopify($);
+        } else {
+          throw new Error('Unsupported store platform');
         }
-      });
-
-      const $ = cheerio.load(response.data);
-      
-      if (url.includes('amazon')) {
-        return await this.scrapeAmazon($, url);
-      } else if (url.includes('shopify')) {
-        return await this.scrapeShopify($);
-      } else {
-        throw new Error('Unsupported store platform');
+      } catch (error) {
+        console.error('Scraping error:', error, error.stack);
+        // Blacklist this proxy for the rest of this scrape
+        blacklistedProxies.add(proxy.proxyString);
+        continue;
       }
-    } catch (error) {
-      console.error('Scraping error:', error);
-      throw new Error('Failed to scrape product information');
     }
+    console.error('Scraping error:', lastError);
+    throw new Error('Failed to scrape product information after trying all proxies');
   }
 
   async scrapeAmazon($, url) {
@@ -212,3 +298,4 @@ class ScrapeService {
 }
 
 module.exports = new ScrapeService(); 
+//
