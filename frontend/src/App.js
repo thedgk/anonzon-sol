@@ -82,44 +82,6 @@ function App() {
                 hideSendSection={true}
               />
             </Box>
-            {/* Payment Instructions and Loader */}
-            <Box
-              sx={{
-                mt: 4,
-                p: { xs: 2, md: 4 },
-                borderRadius: 4,
-                background: 'rgba(30, 34, 45, 0.55)',
-                backdropFilter: 'blur(18px)',
-                border: '1.5px solid rgba(255,255,255,0.13)',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
-                textAlign: 'center',
-                maxWidth: 600,
-                mx: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2
-              }}
-            >
-              <Box sx={{ fontWeight: 700, fontSize: 20, color: 'var(--text-primary)', mb: 1 }}>
-                Send <span style={{ color: 'var(--accent-color)' }}>{/* SOL amount will be shown here by Payment */}</span> SOL to address
-              </Box>
-              <Box sx={{ fontFamily: 'monospace', fontSize: 16, color: 'var(--accent-color)', mb: 2, wordBreak: 'break-all' }}>
-                1AjXdhPauJ3dYJsKbLTrr15qVJauCRawtw8dXLRT25d
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
-                <Box className="loader" sx={{ width: 32, height: 32, border: '4px solid #fff2', borderTop: '4px solid var(--accent-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <Box sx={{ fontWeight: 600, fontSize: 18, color: 'var(--text-secondary)' }}>
-                  Waiting for payment...
-                </Box>
-              </Box>
-            </Box>
-            <style>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
           </Box>
         );
       default:

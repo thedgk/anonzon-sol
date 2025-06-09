@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import Navbar from './components/Navbar';
 import { Box, Button, Typography, Container, Grid, useTheme, Paper } from '@mui/material';
 import { motion } from 'framer-motion';
 import { styled } from '@mui/material/styles';
@@ -11,13 +12,22 @@ const AnimatedGrid = motion(Grid);
 
 // Recent Orders Carousel
 const RecentOrdersCarousel = () => {
-  const sampleOrders = [
-    { id: 1, product: "iPhone 15 Pro", amount: "2.5 SOL", status: "Delivered" },
-    { id: 2, product: "MacBook Air M4", amount: "5.2 SOL", status: "Processing" },
-    { id: 3, product: "AirPods Pro", amount: "1.8 SOL", status: "Shipped" },
-    { id: 4, product: "iPad Pro", amount: "3.7 SOL", status: "Processing" },
-    { id: 5, product: "Apple Watch", amount: "2.1 SOL", status: "Delivered" },
-  ];
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch('/api/tracked-urls/recent');
+        const data = await res.json();
+        if (data.success) {
+          setOrders(data.items);
+        }
+      } catch (err) {
+        setOrders([]);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   return (
     <Box sx={{ 
@@ -44,26 +54,38 @@ const RecentOrdersCarousel = () => {
           },
         }}
       >
-        {[...sampleOrders, ...sampleOrders].map((order, index) => (
-          <Paper
-            key={`${order.id}-${index}`}
-            sx={{
-              p: 2,
-              minWidth: 200,
-              bgcolor: 'rgba(255,255,255,0.05)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '12px',
-            }}
-          >
-            <Typography variant="subtitle2" sx={{ color: '#fff', mb: 1 }}>
-              {order.product}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              {order.amount} • {order.status}
-            </Typography>
-          </Paper>
-        ))}
+        {orders.map((order, index) => {
+          const name = order.name ? order.name.split(' ').slice(0, 4).join(' ') : '';
+          const sol = order.priceUSD ? (order.priceUSD * 155).toFixed(2) : '';
+          return (
+            <Paper
+              key={index}
+              sx={{
+                p: 2,
+                minWidth: 200,
+                bgcolor: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2
+              }}
+            >
+              {order.image && (
+                <img src={order.image} alt="product" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 6, marginRight: 10 }} />
+              )}
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: '#fff', mb: 0.5, fontSize: 16, fontWeight: 600 }}>
+                  {name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(74,158,255,0.95)', fontWeight: 700, fontSize: 15 }}>
+                  {sol} SOL &bull; Processing
+                </Typography>
+              </Box>
+            </Paper>
+          );
+        })}
       </AnimatedBox>
     </Box>
   );
@@ -124,11 +146,13 @@ const LandingPage = () => {
       bgcolor: 'var(--primary-bg)',
       overflow: 'hidden'
     }}>
-      {/* Recent Orders Carousel */}
-      <RecentOrdersCarousel />
+      <Navbar />
+      <Box sx={{ mt: { xs: 7, md: 8 } }}>
+        <RecentOrdersCarousel />
+      </Box>
 
       {/* Hero Section */}
-      <Container maxWidth="md" sx={{ pt: { xs: 10, md: 16 }, pb: 8, textAlign: 'center' }}>
+      <Container maxWidth="md" sx={{ pt: { xs: 5, md: 8 }, pb: 8, textAlign: 'center' }}>
         <Typography variant="h2" sx={{ fontWeight: 900, mb: 2, fontSize: { xs: 36, md: 56 }, letterSpacing: -1, color: 'var(--text-primary)' }}>
           The Anonymous Shopping Experience
         </Typography>

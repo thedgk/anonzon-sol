@@ -293,13 +293,13 @@ function Payment({ onBack, orderData }) {
           backgroundColor: 'rgba(10, 14, 23, 0.8)'
         }}
       >
-        <Box className="privacy-card" sx={{ maxWidth: 500, width: '90%', p: 3 }}>
+        <Box className="privacy-card" sx={{ maxWidth: 500, width: '90%', p: 3, textAlign: 'center' }}>
           <Typography variant="h6" gutterBottom>Send Payment</Typography>
           {invoice && (
             <>
               <Typography variant="body1" sx={{ mb: 1 }}>Send exactly <b>{solAmount} SOL</b> to:</Typography>
               <Typography variant="body2" sx={{ mb: 2, wordBreak: 'break-all' }}>{invoice.publicKey}</Typography>
-              <img src={invoice.qrCodeUrl} alt="QR Code" style={{ width: 180, marginBottom: 16 }} />
+              <img src={invoice.qrCodeUrl} alt="QR Code" style={{ width: 180, marginBottom: 16, display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
               <Typography variant="body2" sx={{ mb: 2 }}>Scan QR or copy address to pay from your wallet.</Typography>
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle1" sx={{ mb: 1 }}>After sending payment, paste your transaction ID or Solscan link below:</Typography>
@@ -308,29 +308,29 @@ function Payment({ onBack, orderData }) {
                 value={txnInput}
                 onChange={e => setTxnInput(e.target.value)}
                 placeholder="Transaction ID or Solscan link"
-                style={{ width: '100%', padding: 8, marginBottom: 12, borderRadius: 4, border: '1px solid #ccc',
-                  color: '#111', background: '#fff',
-                }}
+                style={{ width: '100%', padding: 8, marginBottom: 12, borderRadius: 4, border: '1px solid #ccc', color: '#111', background: '#fff', textAlign: 'center' }}
                 disabled={verifyLoading || paymentStatus === 'paid'}
               />
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleVerifyTxn}
-                disabled={verifyLoading || !txnInput || paymentStatus === 'paid'}
-                sx={{ mb: 2 }}
-              >
-                {verifyLoading ? 'Verifying...' : 'Submit Transaction'}
-              </Button>
-              {verifyResult && (
-                <Alert severity={verifyResult.success ? 'success' : 'error'} sx={{ mb: 2 }}>
-                  {verifyResult.message}
-                  {verifyResult.success && verifyResult.amountReceived && (
-                    <><br />Amount received: {verifyResult.amountReceived} SOL</>
-                  )}
-                </Alert>
-              )}
-              <Button variant="outlined" onClick={() => setModalOpen(false)} sx={{ mt: 1 }}>Close</Button>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleVerifyTxn}
+                  disabled={verifyLoading || !txnInput || paymentStatus === 'paid'}
+                  sx={{ width: '80%', maxWidth: 300 }}
+                >
+                  {verifyLoading ? 'Verifying...' : 'Submit Transaction'}
+                </Button>
+                {verifyResult && (
+                  <Alert severity={verifyResult.success ? 'success' : 'error'} sx={{ mb: 2, width: '100%' }}>
+                    {verifyResult.message}
+                    {verifyResult.success && verifyResult.amountReceived && (
+                      <><br />Amount received: {verifyResult.amountReceived} SOL</>
+                    )}
+                  </Alert>
+                )}
+                <Button variant="outlined" onClick={() => setModalOpen(false)} sx={{ width: '80%', maxWidth: 300 }}>Close</Button>
+              </Box>
             </>
           )}
         </Box>
