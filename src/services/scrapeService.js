@@ -11,6 +11,9 @@ const proxies = fs.readFileSync(proxiesFilePath, 'utf-8')
   .map(line => line.trim())
   .filter(Boolean);
 
+console.log('Proxies path:', proxiesFilePath);
+console.log('Loaded proxies:', proxies.length);
+
 // Blacklist cache for failed proxies
 const blacklistedProxies = new Set();
 
@@ -133,7 +136,7 @@ class ScrapeService {
           throw new Error('Unsupported store platform');
         }
       } catch (error) {
-        lastError = error;
+        console.error('Scraping error:', error, error.stack);
         // Blacklist this proxy for the rest of this scrape
         blacklistedProxies.add(proxy.proxyString);
         continue;
