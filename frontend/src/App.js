@@ -10,11 +10,19 @@ import Navbar from './components/Navbar';
 import RevShare from './components/RevShare';
 import Socials from './components/Socials';
 import HowItWorks from './components/HowItWorks';
+import backgroundImg from './components/Background.webp';
 
 const steps = ['Product Verification', 'Shipping Information', 'Payment'];
 
 const MotionPaper = motion(Paper);
 const MotionBox = motion(Box);
+
+const bgPositions = [
+  { top: '1%', left: '2%', rotate: 12 },
+  { top: '60%', left: '10%', rotate: 44 },
+  { top: '6%', left: '65%', rotate: 88 },
+  { top: '60%', left: '55%', rotate: 120 },
+];
 
 function App() {
   const [activeStep, setActiveStep] = useState(0);
@@ -109,6 +117,26 @@ function App() {
           }
         }}
       >
+        {/* 4 fixed background images */}
+        {bgPositions.map((pos, idx) => (
+          <img
+            key={idx}
+            src={backgroundImg}
+            alt="bg"
+            style={{
+              position: 'absolute',
+              top: pos.top,
+              left: pos.left,
+              width: 512,
+              height: 512,
+              opacity: 0.12,
+              zIndex: 0,
+              pointerEvents: 'none',
+              transform: `rotate(${pos.rotate}deg)`,
+              filter: 'blur(0.5px)',
+            }}
+          />
+        ))}
         <Routes>
           <Route path="/" element={
             <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
